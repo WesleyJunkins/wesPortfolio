@@ -1,0 +1,102 @@
+/* @import url("https://use.typekit.net/jmk3xov.css"); */
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    text-align: center;
+
+}
+
+table,
+th,
+td {
+    border: 3px solid red;
+}
+
+body {
+    background-color: #DBF9FC;
+    text-align: center;
+}
+
+
+:root {
+    --dark-bg: rgba(15, 15, 15, 0.95);
+    --spacing: 350px;
+
+    font-family: brandon-grotesque, sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    text-align: center;
+
+}
+
+h1,
+h2,
+h3,
+blockquote {
+    font-family: elevon, sans-serif;
+    font-weight: 700;
+    font-style: normal;
+    text-align: center;
+
+}
+
+main {
+    width: auto;
+    color: white;
+    z-index: 99;
+    position: absolute;
+    width: 100%;
+    margin: 0px auto;
+    padding: 120px 0px;
+    text-align: center;
+
+
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+}
+
+header {
+    background: var(--dark-bg);
+    grid-column: 4/10;
+    font-size: 2.5rem;
+    padding: 2rem;
+    margin-bottom: var(--spacing);
+    text-align: center;
+
+}
+
+section {
+    grid-column: 4/10;
+    /* padding: 1rem; */
+    background: var(--dark-bg);
+    font-size: 1.25rem;
+    line-height: 1.5;
+    margin-bottom: var(--spacing);
+    text-align: center;
+
+}
+
+blockquote {
+    margin: 0;
+    padding: 0;
+    grid-column: 4/10;
+    margin-bottom: var(--spacing);
+    text-align: center;
+
+}
+
+blockquote p {
+    color: black;
+    background-color: rgb(245, 4, 4);
+    font-size: 4rem;
+    display: inline;
+    line-height: 1;
+    text-align: center;
+
+}
+
+.left {
+    grid-column: 6 / 12;
+}
