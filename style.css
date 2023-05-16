@@ -5,7 +5,6 @@ canvas {
     top: 0;
     left: 0;
     text-align: center;
-
 }
 
 table,
@@ -21,14 +20,13 @@ body {
 
 
 :root {
-    --dark-bg: rgba(15, 15, 15, 0.95);
+    --dark-bg: rgba(24, 23, 23, 0.972);
     --spacing: 350px;
 
     font-family: brandon-grotesque, sans-serif;
     font-weight: 400;
     font-style: normal;
     text-align: center;
-
 }
 
 h1,
@@ -39,7 +37,6 @@ blockquote {
     font-weight: 700;
     font-style: normal;
     text-align: center;
-
 }
 
 main {
@@ -51,8 +48,6 @@ main {
     margin: 0px auto;
     padding: 120px 0px;
     text-align: center;
-
-
     display: grid;
     grid-template-columns: repeat(12, 1fr);
 }
@@ -64,18 +59,16 @@ header {
     padding: 2rem;
     margin-bottom: var(--spacing);
     text-align: center;
-
 }
 
 section {
     grid-column: 4/10;
-    /* padding: 1rem; */
+     padding: 1rem; 
     background: var(--dark-bg);
     font-size: 1.25rem;
     line-height: 1.5;
     margin-bottom: var(--spacing);
-    text-align: center;
-
+    text-align: left;
 }
 
 blockquote {
@@ -83,20 +76,23 @@ blockquote {
     padding: 0;
     grid-column: 4/10;
     margin-bottom: var(--spacing);
+    line-height: 3.1;
     text-align: center;
-
 }
 
 blockquote p {
-    color: black;
-    background-color: rgb(245, 4, 4);
+    color: rgb(255, 255, 255);
+    background-color: rgba(245, 4, 4, 0.522);
     font-size: 4rem;
     display: inline;
     line-height: 1;
     text-align: center;
-
 }
 
 .left {
     grid-column: 6 / 12;
+}
+
+ul li {
+    font-size: 1rem;
 }

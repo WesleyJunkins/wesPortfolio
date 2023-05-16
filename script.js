@@ -73,6 +73,8 @@ function moveCamera() {
 document.body.onscroll = moveCamera; //This will make the camera move when we scroll. This is an event handler.
 moveCamera();
 
+var responsivenessCounter = 0;
+
 function animate() {
     requestAnimationFrame(animate);
     torus.position.x = camera.position.x;
@@ -98,30 +100,37 @@ function animate() {
     wes.position.y = camera.position.y;
     wes.position.z = camera.position.z - 10;
 
-    const geometry1 = new THREE.SphereGeometry(1.50, 24, 24);
-    const material1 = new THREE.MeshStandardMaterial({
-        color: 0xff0000,
-    });
-    const star1 = new THREE.Mesh(geometry1, material1);
-    const [x1, y1, z1] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(2000)); //This randomly generates an x, y, and z position value for each star by filling an array with 3 values, then mapping each value to the ThreeJS random float spread function which is a helper function that randomly generates a number between negative and positive arguments, (100 in this case).
-    star1.position.set(x1 + camera.position.x, y1 + camera.position.y, z1 + camera.position.z);//Then we will take those numbers from above and set it as the position of a star. Then we will add it to the scene.
-    scene.add(star1);
-    const geometry2 = new THREE.SphereGeometry(1.50, 24, 24);
-    const material2 = new THREE.MeshStandardMaterial({
-        color: 0x7DF9FF,
-    });
-    const star2 = new THREE.Mesh(geometry2, material2);
-    const [x2, y2, z2] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(2000)); //This randomly generates an x, y, and z position value for each star by filling an array with 3 values, then mapping each value to the ThreeJS random float spread function which is a helper function that randomly generates a number between negative and positive arguments, (100 in this case).
-    star2.position.set(x2 + camera.position.x, y2 + camera.position.y, z2 + camera.position.z);//Then we will take those numbers from above and set it as the position of a star. Then we will add it to the scene.
-    scene.add(star2);
-    const geometry3 = new THREE.SphereGeometry(1.50, 24, 24);
-    const material3 = new THREE.MeshStandardMaterial({
-        color: 0x50C878,
-    });
-    const star3 = new THREE.Mesh(geometry3, material3);
-    const [x3, y3, z3] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(2000)); //This randomly generates an x, y, and z position value for each star by filling an array with 3 values, then mapping each value to the ThreeJS random float spread function which is a helper function that randomly generates a number between negative and positive arguments, (100 in this case).
-    star3.position.set(x3 + camera.position.x, y3 + camera.position.y, z3 + camera.position.z);//Then we will take those numbers from above and set it as the position of a star. Then we will add it to the scene.
-    scene.add(star3);
+    if(responsivenessCounter % 10 == 0)
+    {
+        const geometry1 = new THREE.SphereGeometry(1.50, 24, 24);
+        const material1 = new THREE.MeshStandardMaterial({
+            color: 0xff0000,
+        });
+        const star1 = new THREE.Mesh(geometry1, material1);
+        const [x1, y1, z1] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(1000)); //This randomly generates an x, y, and z position value for each star by filling an array with 3 values, then mapping each value to the ThreeJS random float spread function which is a helper function that randomly generates a number between negative and positive arguments, (100 in this case).
+        star1.position.set(x1 + camera.position.x, y1 + camera.position.y, z1 + camera.position.z);//Then we will take those numbers from above and set it as the position of a star. Then we will add it to the scene.
+        scene.add(star1);
+        const geometry2 = new THREE.SphereGeometry(1.50, 24, 24);
+        const material2 = new THREE.MeshStandardMaterial({
+            color: 0x7DF9FF,
+        });
+        const star2 = new THREE.Mesh(geometry2, material2);
+        const [x2, y2, z2] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(1000)); //This randomly generates an x, y, and z position value for each star by filling an array with 3 values, then mapping each value to the ThreeJS random float spread function which is a helper function that randomly generates a number between negative and positive arguments, (100 in this case).
+        star2.position.set(x2 + camera.position.x, y2 + camera.position.y, z2 + camera.position.z);//Then we will take those numbers from above and set it as the position of a star. Then we will add it to the scene.
+        scene.add(star2);
+        const geometry3 = new THREE.SphereGeometry(1.50, 24, 24);
+        const material3 = new THREE.MeshStandardMaterial({
+            color: 0x50C878,
+        });
+        const star3 = new THREE.Mesh(geometry3, material3);
+        const [x3, y3, z3] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(1000)); //This randomly generates an x, y, and z position value for each star by filling an array with 3 values, then mapping each value to the ThreeJS random float spread function which is a helper function that randomly generates a number between negative and positive arguments, (100 in this case).
+        star3.position.set(x3 + camera.position.x, y3 + camera.position.y, z3 + camera.position.z);//Then we will take those numbers from above and set it as the position of a star. Then we will add it to the scene.
+        scene.add(star3);
+    }
+
+    responsivenessCounter++;
+
+    console.log(responsivenessCounter);
 
     camera.position.z += 0.5;
 
