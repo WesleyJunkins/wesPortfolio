@@ -76,7 +76,7 @@ blockquote {
     padding: 0;
     grid-column: 4/10;
     margin-bottom: var(--spacing);
-    line-height: 3.1;
+    line-height: 3.11;
     text-align: center;
 }
 

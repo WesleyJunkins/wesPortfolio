@@ -23,28 +23,24 @@ camera.position.x = 0;
 camera.position.y = 0;
 camera.position.z = 0;
 
-const geometry = new THREE.TorusGeometry(6, 0.05, 16, 100); //The vectors that make up an object.
+const geometry = new THREE.TorusGeometry(3, 0.13, 16, 100); //The vectors that make up an object.
 const material = new THREE.MeshStandardMaterial({
     color: 0xFFA500,
 }); //The wrapping paper to go around that object.
 const torus = new THREE.Mesh(geometry, material) //Geometry + Material
 scene.add(torus);
-const geometry1 = new THREE.TorusGeometry(6, 0.05, 16, 100); //The vectors that make up an object.
+const geometry1 = new THREE.TorusGeometry(3, 0.13, 16, 100); //The vectors that make up an object.
 const material1 = new THREE.MeshStandardMaterial({
     color: 0xFF0000,
 }); //The wrapping paper to go around that object.
 const torus1 = new THREE.Mesh(geometry1, material1) //Geometry + Material
 scene.add(torus1);
-const geometry2 = new THREE.TorusGeometry(6, 0.05, 16, 100); //The vectors that make up an object.
+const geometry2 = new THREE.TorusGeometry(3, 0.13, 16, 100); //The vectors that make up an object.
 const material2 = new THREE.MeshStandardMaterial({
     color: 0x00FF00,
 }); //The wrapping paper to go around that object.
 const torus2 = new THREE.Mesh(geometry2, material2) //Geometry + Material
 scene.add(torus2);
-
-torus.position.x = 0;
-torus.position.y = 0;
-torus.position.z = 0;
 
 const controls = new OrbitControls(camera, renderer.domElement); //This will listen to dom events on the mouse, and update the camera position accordingly.
 
@@ -77,13 +73,13 @@ var responsivenessCounter = 0;
 
 function animate() {
     requestAnimationFrame(animate);
-    torus.position.x = camera.position.x;
+    torus.position.x = camera.position.x + 10;
     torus.position.y = camera.position.y;
     torus.position.z = camera.position.z - 10;
-    torus1.position.x = camera.position.x;
+    torus1.position.x = camera.position.x + 10;
     torus1.position.y = camera.position.y;
     torus1.position.z = camera.position.z - 10;
-    torus2.position.x = camera.position.x;
+    torus2.position.x = camera.position.x + 10;
     torus2.position.y = camera.position.y;
     torus2.position.z = camera.position.z - 10;
     torus.rotation.x += 0.01;
