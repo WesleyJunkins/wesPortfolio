@@ -96,8 +96,7 @@ function animate() {
     wes.position.y = camera.position.y;
     wes.position.z = camera.position.z - 10;
 
-    if(responsivenessCounter % 10 == 0)
-    {
+    if (responsivenessCounter % 10 == 0) {
         const geometry1 = new THREE.SphereGeometry(1.50, 24, 24);
         const material1 = new THREE.MeshStandardMaterial({
             color: 0xff0000,
