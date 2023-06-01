@@ -5,6 +5,7 @@ import { OrbitControls } from 'https://unpkg.com/three@0.127.0/examples/jsm/cont
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x000000, 200, 500);
 scene.background = new THREE.Color(0x000000); //301934
+var colorPlus = 0x000000;
 
 const pointLight = new THREE.PointLight(0xffffff); //0x is a hexadecimal literal. It means we are working with hexadecimals.
 pointLight.position.set(20, 20, 20);
@@ -123,9 +124,13 @@ function animate() {
         scene.add(star3);
     }
 
+    var colorPlus = colorPlus + 1;
+    console.log(colorPlus);
+    scene.background = new THREE.Color(colorPlus);
+
     responsivenessCounter++;
 
-    console.log(responsivenessCounter);
+    //console.log(responsivenessCounter);
 
     camera.position.z += 0.5;
 
