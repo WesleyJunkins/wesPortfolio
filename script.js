@@ -2,6 +2,9 @@ import * as THREE from 'https://unpkg.com/three@0.127.0/build/three.module.js'
 
 import { OrbitControls } from 'https://unpkg.com/three@0.127.0/examples/jsm/controls/OrbitControls.js' //This is a CDN to get orbit controls, which are an "addon" or an "example" that is not included with the main THREE library import above.
 
+var width = window.innerWidth;
+var height = window.innerHeight;
+
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x000000, 200, 500);
 scene.background = new THREE.Color(0x000000); //301934
@@ -72,6 +75,19 @@ moveCamera();
 
 var responsivenessCounter = 0;
 
+window.addEventListener('resize', () => {
+    // update display width and height
+    width = window.innerWidth
+    height = window.innerHeight
+    // update camera aspect
+    camera.aspect = width / height
+    camera.updateProjectionMatrix()
+    // update renderer
+    renderer.setSize(width, height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.render(scene, camera)
+ })
+
 function animate() {
     requestAnimationFrame(animate);
     torus.position.x = camera.position.x + 10;
@@ -124,12 +140,10 @@ function animate() {
         scene.add(star3);
     }
 
-    var colorPlus = colorPlus + 1;
-    console.log(colorPlus);
-    scene.background = new THREE.Color(colorPlus);
-
+    //var colorPlus = colorPlus + 1;
+    //console.log(colorPlus);
+    //scene.background = new THREE.Color(colorPlus);
     responsivenessCounter++;
-
     //console.log(responsivenessCounter);
 
     camera.position.z += 0.5;
