@@ -89,6 +89,7 @@ window.addEventListener('resize', () => {
  })
 
  var titleName = document.querySelector("#title");
+ var titleAnimationCounterRaw = 0; 
  var titleAnimationCounter = 0;
 
 function animate() {
@@ -112,50 +113,52 @@ function animate() {
     torus2.rotation.y += 0.01;
     torus2.rotation.z += 0.005;
 
-    if(titleAnimationCounter%43 == 0)
+    if(titleAnimationCounter%14 == 13)
     {
         titleName.innerText = "wesley's websitE";
-    }else if(titleAnimationCounter%41 == 0)
+    }else if(titleAnimationCounter%14 == 12)
     {
         titleName.innerText = "wesley's websiTe";
-    }else if(titleAnimationCounter%37 == 0)
+    }else if(titleAnimationCounter%14 == 11)
     {
         titleName.innerText = "wesley's websIte";
-    }else if(titleAnimationCounter%31 == 0)
+    }else if(titleAnimationCounter%14 == 10)
     {
         titleName.innerText = "wesley's webSite";
-    }else if(titleAnimationCounter%29 == 0)
+    }else if(titleAnimationCounter%14 == 9)
     {
         titleName.innerText = "wesley's weBsite";
-    }else if(titleAnimationCounter%23 == 0)
+    }else if(titleAnimationCounter%14 == 8)
     {
         titleName.innerText = "wesley's wEbsite";
-    }else if(titleAnimationCounter%19 == 0)
+    }else if(titleAnimationCounter%14 == 7)
     {
         titleName.innerText = "wesley's Website";
-    }else if(titleAnimationCounter%17 == 0)
+    }else if(titleAnimationCounter%14 == 6)
     {
         titleName.innerText = "wesley'S website";
-    }else if(titleAnimationCounter%13 == 0)
+    }else if(titleAnimationCounter%14 == 5)
     {
         titleName.innerText = "wesleY's website";
-    }else if(titleAnimationCounter%11 == 0)
+    }else if(titleAnimationCounter%14 == 4)
     {
         titleName.innerText = "weslEy's website";
-    }else if(titleAnimationCounter%7 == 0)
+    }else if(titleAnimationCounter%14 == 3)
     {
         titleName.innerText = "wesLey's website";
-    }else if(titleAnimationCounter%5 == 0)
+    }else if(titleAnimationCounter%14 == 2)
     {
         titleName.innerText = "weSley's website";
-    }else if(titleAnimationCounter%3 == 0)
+    }else if(titleAnimationCounter%14 == 1)
     {
         titleName.innerText = "wEsley's website";
-    }else if(titleAnimationCounter%2 == 0)
+    }else if(titleAnimationCounter%14 == 0)
     {
         titleName.innerText = "Wesley's website";
     }
-    titleAnimationCounter = titleAnimationCounter + 1;
+    titleAnimationCounterRaw = titleAnimationCounterRaw + 0.03;
+    console.log(titleAnimationCounterRaw);
+    titleAnimationCounter = Math.trunc(titleAnimationCounterRaw);
 
     wes.position.x = camera.position.x + 10;
     wes.position.y = camera.position.y;
