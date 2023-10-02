@@ -112,50 +112,50 @@ function animate() {
     torus2.rotation.y += 0.01;
     torus2.rotation.z += 0.005;
 
-    if(titleAnimationCounter%2 == 0)
+    if(titleAnimationCounter%43 == 0)
     {
-        titleName.innerText = "Wesley's website";
-    }else if(titleAnimationCounter%3 == 0)
-    {
-        titleName.innerText = "wEsley's website";
-    }else if(titleAnimationCounter%5 == 0)
-    {
-        titleName.innerText = "weSley's website";
-    }else if(titleAnimationCounter%7 == 0)
-    {
-        titleName.innerText = "wesLey's website";
-    }else if(titleAnimationCounter%11 == 0)
-    {
-        titleName.innerText = "weslEy's website";
-    }else if(titleAnimationCounter%13 == 0)
-    {
-        titleName.innerText = "wesleY's website";
-    }else if(titleAnimationCounter%17 == 0)
-    {
-        titleName.innerText = "wesley'S website";
-    }else if(titleAnimationCounter%19 == 0)
-    {
-        titleName.innerText = "wesley's Website";
-    }else if(titleAnimationCounter%23 == 0)
-    {
-        titleName.innerText = "wesley's wEbsite";
-    }else if(titleAnimationCounter%29 == 0)
-    {
-        titleName.innerText = "wesley's weBsite";
-    }else if(titleAnimationCounter%31 == 0)
-    {
-        titleName.innerText = "wesley's webSite";
-    }else if(titleAnimationCounter%37 == 0)
-    {
-        titleName.innerText = "wesley's websIte";
+        titleName.innerText = "wesley's websitE";
     }else if(titleAnimationCounter%41 == 0)
     {
         titleName.innerText = "wesley's websiTe";
-    }else if(titleAnimationCounter%43 == 0)
+    }else if(titleAnimationCounter%37 == 0)
     {
-        titleName.innerText = "wesley's websitE";
-    }else
-    titleAnimationCounter++;
+        titleName.innerText = "wesley's websIte";
+    }else if(titleAnimationCounter%31 == 0)
+    {
+        titleName.innerText = "wesley's webSite";
+    }else if(titleAnimationCounter%29 == 0)
+    {
+        titleName.innerText = "wesley's weBsite";
+    }else if(titleAnimationCounter%23 == 0)
+    {
+        titleName.innerText = "wesley's wEbsite";
+    }else if(titleAnimationCounter%19 == 0)
+    {
+        titleName.innerText = "wesley's Website";
+    }else if(titleAnimationCounter%17 == 0)
+    {
+        titleName.innerText = "wesley'S website";
+    }else if(titleAnimationCounter%13 == 0)
+    {
+        titleName.innerText = "wesleY's website";
+    }else if(titleAnimationCounter%11 == 0)
+    {
+        titleName.innerText = "weslEy's website";
+    }else if(titleAnimationCounter%7 == 0)
+    {
+        titleName.innerText = "wesLey's website";
+    }else if(titleAnimationCounter%5 == 0)
+    {
+        titleName.innerText = "weSley's website";
+    }else if(titleAnimationCounter%3 == 0)
+    {
+        titleName.innerText = "wEsley's website";
+    }else if(titleAnimationCounter%2 == 0)
+    {
+        titleName.innerText = "Wesley's website";
+    }
+    titleAnimationCounter = titleAnimationCounter + 1;
 
     wes.position.x = camera.position.x + 10;
     wes.position.y = camera.position.y;
