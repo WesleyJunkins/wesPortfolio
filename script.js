@@ -157,7 +157,7 @@ function animate() {
         titleName.innerText = "Wesley's website";
     }
     titleAnimationCounterRaw = titleAnimationCounterRaw + 0.03;
-    console.log(titleAnimationCounterRaw);
+    //console.log(titleAnimationCounterRaw);
     titleAnimationCounter = Math.trunc(titleAnimationCounterRaw);
 
     wes.position.x = camera.position.x + 10;
