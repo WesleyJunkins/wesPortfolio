@@ -86,11 +86,11 @@ window.addEventListener('resize', () => {
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.render(scene, camera)
- })
+})
 
- var titleName = document.querySelector("#title");
- var titleAnimationCounterRaw = 0; 
- var titleAnimationCounter = 0;
+var titleName = document.querySelector("#title");
+var titleAnimationCounterRaw = 0;
+var titleAnimationCounter = 0;
 
 function animate() {
     requestAnimationFrame(animate);
@@ -113,47 +113,33 @@ function animate() {
     torus2.rotation.y += 0.01;
     torus2.rotation.z += 0.005;
 
-    if(titleAnimationCounter%14 == 13)
-    {
+    if (titleAnimationCounter % 14 == 13) {
         titleName.innerText = "wesley's websitE";
-    }else if(titleAnimationCounter%14 == 12)
-    {
+    } else if (titleAnimationCounter % 14 == 12) {
         titleName.innerText = "wesley's websiTe";
-    }else if(titleAnimationCounter%14 == 11)
-    {
+    } else if (titleAnimationCounter % 14 == 11) {
         titleName.innerText = "wesley's websIte";
-    }else if(titleAnimationCounter%14 == 10)
-    {
+    } else if (titleAnimationCounter % 14 == 10) {
         titleName.innerText = "wesley's webSite";
-    }else if(titleAnimationCounter%14 == 9)
-    {
+    } else if (titleAnimationCounter % 14 == 9) {
         titleName.innerText = "wesley's weBsite";
-    }else if(titleAnimationCounter%14 == 8)
-    {
+    } else if (titleAnimationCounter % 14 == 8) {
         titleName.innerText = "wesley's wEbsite";
-    }else if(titleAnimationCounter%14 == 7)
-    {
+    } else if (titleAnimationCounter % 14 == 7) {
         titleName.innerText = "wesley's Website";
-    }else if(titleAnimationCounter%14 == 6)
-    {
+    } else if (titleAnimationCounter % 14 == 6) {
         titleName.innerText = "wesley'S website";
-    }else if(titleAnimationCounter%14 == 5)
-    {
+    } else if (titleAnimationCounter % 14 == 5) {
         titleName.innerText = "wesleY's website";
-    }else if(titleAnimationCounter%14 == 4)
-    {
+    } else if (titleAnimationCounter % 14 == 4) {
         titleName.innerText = "weslEy's website";
-    }else if(titleAnimationCounter%14 == 3)
-    {
+    } else if (titleAnimationCounter % 14 == 3) {
         titleName.innerText = "wesLey's website";
-    }else if(titleAnimationCounter%14 == 2)
-    {
+    } else if (titleAnimationCounter % 14 == 2) {
         titleName.innerText = "weSley's website";
-    }else if(titleAnimationCounter%14 == 1)
-    {
+    } else if (titleAnimationCounter % 14 == 1) {
         titleName.innerText = "wEsley's website";
-    }else if(titleAnimationCounter%14 == 0)
-    {
+    } else if (titleAnimationCounter % 14 == 0) {
         titleName.innerText = "Wesley's website";
     }
     titleAnimationCounterRaw = titleAnimationCounterRaw + 0.03;
