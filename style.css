@@ -111,6 +111,18 @@ section {
     text-align: left;
     border: 2px solid white; /* White outline for section boxes */
     margin-bottom: 3rem; /* Adds more space between sections */
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: transform 0.2s ease;
+    perspective: 1000px;
+}
+
+/* Add a wrapper div for the content to prevent text distortion */
+.section-content {
+    position: relative;
+    z-index: 1;
+    transform-style: preserve-3d;
 }
 
 section ul {
@@ -192,4 +204,39 @@ section:last-of-type {
     hr {
         margin: 1rem 0;
     }
+}
+
+.contact-button {
+    display: block;
+    width: 200px;
+    margin: 10px auto;
+    padding: 10px 20px;
+    background-color: rgba(128, 128, 128, 0.4); /* More transparent gray */
+    color: white;
+    border: 2px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.contact-button:hover {
+    background-color: rgba(160, 160, 160, 0.6); /* More transparent on hover */
+}
+
+.glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.8s ease;
+    opacity: 0;
+    filter: blur(10px);
+}
+
+section:hover .glow {
+    opacity: 1;
 }
