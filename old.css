@@ -185,8 +185,50 @@ section:last-of-type {
         font-size: 0.9rem;
     }
 
+    .contact-button {
+        max-width: 220px;
+        min-width: 160px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .contact-buttons-container {
+        gap: 12px;
+        padding: 0 8px;
+    }
+
+    .contact-buttons-column {
+        max-width: 280px;
+        gap: 8px;
+    }
+
     hr {
         margin: 1.5rem 0;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .contact-buttons-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .contact-buttons-column {
+        width: 100%;
+        max-width: 250px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .contact-button {
+        width: auto;
+        min-width: 140px;
+        max-width: 200px;
+        padding: 8px 12px;
+        font-size: 13px;
     }
 }
 
@@ -208,27 +250,70 @@ section:last-of-type {
         font-size: 0.8rem;
     }
 
+    .contact-button {
+        min-width: 120px;
+        max-width: 180px;
+        padding: 8px 10px;
+        font-size: 12px;
+        margin: 5px auto;
+    }
+
+    .contact-buttons-container {
+        gap: 8px;
+        padding: 0 5px;
+    }
+
+    .contact-buttons-column {
+        max-width: 220px;
+        gap: 6px;
+    }
+
     hr {
         margin: 1rem 0;
     }
 }
 
+@media screen and (max-width: 360px) {
+    .contact-buttons-column {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .contact-button {
+        width: 100%;
+        max-width: 200px;
+        min-width: 100px;
+        padding: 10px 8px;
+        font-size: 11px;
+    }
+}
+
 .contact-button {
     display: block;
-    width: 200px;
+    width: 100%;
+    max-width: 250px;
+    min-width: 180px;
     margin: 10px auto;
-    padding: 10px 20px;
+    padding: 12px 20px;
     background-color: rgba(128, 128, 128, 0.4); /* More transparent gray */
     color: white;
     border: 2px solid white;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s ease;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .contact-button:hover {
     background-color: rgba(160, 160, 160, 0.6); /* More transparent on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
 }
 
 .glow {
@@ -265,16 +350,19 @@ section:has(h1:first-child:contains("Contact Me")) .contact-button {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 20px;
+    gap: 15px;
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto; /* Center the container */
+    padding: 0 10px;
 }
 
 .contact-buttons-column {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 45%;
+    gap: 10px;
+    width: 100%;
+    max-width: 300px;
     margin: 0 auto; /* Center the columns */
 }
