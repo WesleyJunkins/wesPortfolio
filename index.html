@@ -18,14 +18,52 @@
         <div class="nav-buttons">
             <button class="button" onclick="showSection('objective')">About</button>
             <button class="button" onclick="showSection('links')">My Links</button>
-            <button class="button" onclick="showSection('education')">Education</button>
-            <button class="button" onclick="showSection('work')">Work Experience</button>
-            <button class="button" onclick="showSection('honors')">Honors and Awards</button>
-            <button class="button" onclick="showSection('societies')">Societies and Organizations</button>
-            <button class="button" onclick="showSection('coursework')">Relevant Coursework</button>
-            <button class="button" onclick="showSection('projects')">Projects</button>
-            <button class="button" onclick="showSection('publications')">Publications</button>
-            <button class="button" onclick="showSection('service')">Service</button>
+            
+            <!-- Resume Dropdown -->
+            <div class="dropdown">
+                <button class="button dropdown-toggle" onclick="toggleDropdown('resume-dropdown')">
+                    Résumé
+                </button>
+                <div class="dropdown-menu" id="resume-dropdown">
+                    <button class="dropdown-item" onclick="showSection('education')">Education</button>
+                    <button class="dropdown-item" onclick="showSection('work')">Work Experience</button>
+                    <button class="dropdown-item" onclick="showSection('honors')">Honors & Awards</button>
+                    <button class="dropdown-item" onclick="showSection('societies')">Societies</button>
+                    <button class="dropdown-item" onclick="showSection('coursework')">Coursework</button>
+                </div>
+            </div>
+            
+            <!-- Research Dropdown -->
+            <div class="dropdown">
+                <button class="button dropdown-toggle" onclick="toggleDropdown('research-dropdown')">
+                    Research
+                </button>
+                <div class="dropdown-menu" id="research-dropdown">
+                    <button class="dropdown-item" onclick="showSection('projects')">Projects</button>
+                    <button class="dropdown-item" onclick="showSection('publications')">Publications</button>
+                    <button class="dropdown-item" onclick="showSection('service')">Service</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav-buttons">
+            <button class="button" onclick="showSection('objective')">About</button>
+            <button class="button" onclick="showSection('links')">My Links</button>
+            <button class="button" onclick="toggleMobileSubmenu('resume-submenu')">Résumé</button>
+            <div class="mobile-submenu" id="resume-submenu">
+                <button class="submenu-item" onclick="showSection('education')">Education</button>
+                <button class="submenu-item" onclick="showSection('work')">Work Experience</button>
+                <button class="submenu-item" onclick="showSection('honors')">Honors & Awards</button>
+                <button class="submenu-item" onclick="showSection('societies')">Societies</button>
+                <button class="submenu-item" onclick="showSection('coursework')">Coursework</button>
+            </div>
+            <button class="button" onclick="toggleMobileSubmenu('research-submenu')">Research</button>
+            <div class="mobile-submenu" id="research-submenu">
+                <button class="submenu-item" onclick="showSection('projects')">Projects</button>
+                <button class="submenu-item" onclick="showSection('publications')">Publications</button>
+                <button class="submenu-item" onclick="showSection('service')">Service</button>
+            </div>
         </div>
         <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
             <span></span>
@@ -42,6 +80,10 @@
 
     <main>
         <section id="objective">
+            <div class="bubble project-bubble">
+                <h3>Under Construction</h3>
+                <p>This website is currently under construction. Please check back soon for updates!</p>
+            </div>
             <div class="bubble project-bubble" data-images='["wes.jpg"]'>
                 <div class="project-content">
                     <h3 class="project-title"><a href="old.html"
@@ -118,6 +160,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="education">
+            <h1 class="page-title">Education</h1>
             <div class="bubble">
                 <h3>High School Diploma | Gordo High School</h3>
                 <h4>August, 2016 - May, 2020</h4>
@@ -162,6 +205,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="work">
+            <h1 class="page-title">Work</h1>
             <div class="bubble">
                 <h3>IT | Mt. Pleasant Baptist Church, Gordo, AL</h3>
                 <h4>October, 2020 - Present</h4>
@@ -198,6 +242,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="honors">
+            <h1 class="page-title">Honors</h1>
             <div class="bubble">
                 <h3>President's List | Shelton State Community College and The University of Alabama</h3>
                 <h4>December, 2020 - Present</h4>
@@ -300,6 +345,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="societies">
+            <h1 class="page-title">Societies</h1>
             <div class="bubble">
                 <h3>Phi Theta Kappa</h3>
                 <h4>Became Member: February, 2021</h4>
@@ -386,6 +432,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="coursework">
+            <h1 class="page-title">Coursework</h1>
             <div class="bubble">
                 <h3>Calculus I</h3>
                 <h4>Spring 2021 | Grade: 99, A</h4>
@@ -568,6 +615,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="projects">
+            <h1 class="page-title">Projects</h1>
             <div class="bubble project-bubble"
                 data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
                 <div class="project-content">
@@ -683,6 +731,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="publications">
+            <h1 class="page-title">Publications</h1>
             <div class="bubble">
                 <h3>PhysioBots: Engaging K-12 Students with Physiological Computing and Robotics</h3>
                 <h4>April, 2025</h4>
@@ -742,6 +791,7 @@
         <!-- ------------------------------------------------------------------------------------------------------------------ -->
 
         <section id="service">
+            <h1 class="page-title">Service</h1>
             <div class="bubble project-bubble">
                 <div class="project-content">
                     <h3 class="project-title">SIGCSE Paper Reviewer</h3>
@@ -771,6 +821,8 @@
             </div>
         </section>
     </main>
+
+
 
     <!-- Footer -->
     <footer class="footer">

@@ -16,22 +16,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Section Switching Functionality
 function initSectionSwitching() {
-    // Add event listeners to nav buttons
+    // Add event listeners to nav buttons and dropdown items
     const navButtons = document.querySelectorAll('.nav-buttons .button');
-    navButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove .active from all
-            navButtons.forEach(b => b.classList.remove('active'));
-            // Add .active to this
-            this.classList.add('active');
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    
+    // Show objective section by default
+    showSection('objective');
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdowns = document.querySelectorAll('.dropdown');
+        dropdowns.forEach(dropdown => {
+            if (!dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
         });
     });
     
-    // Show objective section by default and set active button
-    showSection('objective');
-    // Set active on About button
-    const aboutBtn = Array.from(navButtons).find(btn => btn.textContent.trim().toLowerCase() === 'about');
-    if (aboutBtn) aboutBtn.classList.add('active');
+    // Close mobile submenus when clicking outside
+    document.addEventListener('click', function(event) {
+        const submenus = document.querySelectorAll('.mobile-submenu');
+        submenus.forEach(submenu => {
+            if (!submenu.contains(event.target) && !event.target.closest('.mobile-nav-buttons')) {
+                // Animate closing
+                if (submenu.classList.contains('active')) {
+                    submenu.style.maxHeight = submenu.scrollHeight + 'px';
+                    setTimeout(() => {
+                        submenu.style.maxHeight = '0';
+                        submenu.style.opacity = '0';
+                        submenu.style.transform = 'translateY(-10px)';
+                    }, 10);
+                    setTimeout(() => {
+                        submenu.classList.remove('active');
+                        submenu.style.maxHeight = '';
+                        submenu.style.opacity = '';
+                        submenu.style.transform = '';
+                    }, 300);
+                }
+            }
+        });
+    });
+    
+    // Reposition dropdowns on window resize
+    window.addEventListener('resize', function() {
+        const activeDropdowns = document.querySelectorAll('.dropdown.active');
+        activeDropdowns.forEach(dropdown => {
+            const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+            if (dropdownMenu) {
+                positionDropdown(dropdownMenu);
+            }
+        });
+    });
+    
+    // Add event listeners to submenu items
+    document.querySelectorAll('.submenu-item').forEach(item => {
+        item.addEventListener('click', function() {
+            // Close all mobile submenus when a submenu item is clicked
+            document.querySelectorAll('.mobile-submenu').forEach(submenu => {
+                if (submenu.classList.contains('active')) {
+                    // Animate closing
+                    submenu.style.maxHeight = submenu.scrollHeight + 'px';
+                    setTimeout(() => {
+                        submenu.style.maxHeight = '0';
+                        submenu.style.opacity = '0';
+                        submenu.style.transform = 'translateY(-10px)';
+                    }, 10);
+                    setTimeout(() => {
+                        submenu.classList.remove('active');
+                        submenu.style.maxHeight = '';
+                        submenu.style.opacity = '';
+                        submenu.style.transform = '';
+                    }, 300);
+                }
+            });
+            
+            // Close mobile menu
+            if (window.innerWidth <= 768) {
+                toggleMobileMenu();
+            }
+        });
+    });
+    
+    // Add event listeners to regular nav buttons (About, My Links)
+    document.querySelectorAll('.mobile-nav-buttons .button').forEach(button => {
+        button.addEventListener('click', function() {
+            // Check if this button is not a dropdown toggle
+            const isDropdownToggle = this.getAttribute('onclick') && 
+                                   this.getAttribute('onclick').includes('toggleMobileSubmenu');
+            
+            if (!isDropdownToggle) {
+                // Close all mobile submenus
+                document.querySelectorAll('.mobile-submenu').forEach(submenu => {
+                    if (submenu.classList.contains('active')) {
+                        // Animate closing
+                        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+                        setTimeout(() => {
+                            submenu.style.maxHeight = '0';
+                            submenu.style.opacity = '0';
+                            submenu.style.transform = 'translateY(-10px)';
+                        }, 10);
+                        setTimeout(() => {
+                            submenu.classList.remove('active');
+                            submenu.style.maxHeight = '';
+                            submenu.style.opacity = '';
+                            submenu.style.transform = '';
+                        }, 300);
+                    }
+                });
+                
+                // Close mobile menu
+                if (window.innerWidth <= 768) {
+                    toggleMobileMenu();
+                }
+            }
+        });
+    });
 }
 
 function showSection(sectionName) {
@@ -70,14 +169,7 @@ function showSection(sectionName) {
             }, 150 + i * 80);
         });
     }
-    // Update nav button highlight
-    const navButtons = document.querySelectorAll('.nav-buttons .button');
-    navButtons.forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.textContent.trim().toLowerCase() === sectionName.toLowerCase()) {
-            btn.classList.add('active');
-        }
-    });
+
     
     setTimeout(() => {
         renderProjectImages();
@@ -693,14 +785,25 @@ function initGalleryButtons() {
 function initStickyNav() {
     // Add any additional effects for the top nav bar if needed
     const navButtons = document.querySelectorAll('.nav-buttons .button');
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    
     navButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            // Remove .active from all nav buttons
-            navButtons.forEach(b => b.classList.remove('active'));
-            // Add .active to this button
-            this.classList.add('active');
-            
             // Close mobile menu when a button is clicked
+            if (window.innerWidth <= 768) {
+                toggleMobileMenu();
+            }
+        });
+    });
+    
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Close all dropdowns when a dropdown item is clicked
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                dropdown.classList.remove('active');
+            });
+            
+            // Close mobile menu when a dropdown item is clicked
             if (window.innerWidth <= 768) {
                 toggleMobileMenu();
             }
@@ -708,13 +811,116 @@ function initStickyNav() {
     });
 }
 
+// Dropdown toggle function
+function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    const dropdownContainer = dropdown.parentElement;
+    const allDropdowns = document.querySelectorAll('.dropdown');
+    
+    // If this dropdown is already active, close it
+    if (dropdownContainer.classList.contains('active')) {
+        dropdownContainer.classList.remove('active');
+        return;
+    }
+    
+    // Close all other dropdowns
+    allDropdowns.forEach(d => {
+        d.classList.remove('active');
+    });
+    
+    // Open the clicked dropdown
+    dropdownContainer.classList.add('active');
+    
+    // Position the dropdown to stay on screen
+    positionDropdown(dropdown);
+}
+
+// Function to position dropdown menus to stay on screen
+function positionDropdown(dropdownMenu) {
+    const rect = dropdownMenu.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const dropdownWidth = rect.width;
+    const leftPosition = rect.left;
+    const rightPosition = rect.right;
+    
+    // Reset any previous positioning
+    dropdownMenu.style.left = '';
+    dropdownMenu.style.right = '';
+    
+    // Check if dropdown would overflow on the right
+    if (rightPosition + dropdownWidth > viewportWidth) {
+        // Position from the right edge
+        dropdownMenu.style.left = 'auto';
+        dropdownMenu.style.right = '0';
+    }
+    
+    // Check if dropdown would overflow on the left
+    if (leftPosition < 0) {
+        // Position from the left edge
+        dropdownMenu.style.left = '0';
+        dropdownMenu.style.right = 'auto';
+    }
+}
+
 // Mobile menu toggle function
 function toggleMobileMenu() {
     const navButtons = document.querySelector('.nav-buttons');
+    const mobileNavButtons = document.querySelector('.mobile-nav-buttons');
     const menuToggle = document.querySelector('.mobile-menu-toggle');
     
-    navButtons.classList.toggle('active');
+    // Toggle between desktop and mobile nav
+    if (window.innerWidth <= 768) {
+        mobileNavButtons.classList.toggle('active');
+    } else {
+        navButtons.classList.toggle('active');
+    }
     menuToggle.classList.toggle('active');
+}
+
+// Mobile submenu toggle function
+function toggleMobileSubmenu(submenuId) {
+    const submenu = document.getElementById(submenuId);
+    const allSubmenus = document.querySelectorAll('.mobile-submenu');
+    
+    // Close all other submenus
+    allSubmenus.forEach(menu => {
+        if (menu.id !== submenuId) {
+            menu.classList.remove('active');
+        }
+    });
+    
+    // Toggle the clicked submenu with animation
+    if (submenu.classList.contains('active')) {
+        // Animate closing
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+        setTimeout(() => {
+            submenu.style.maxHeight = '0';
+            submenu.style.opacity = '0';
+            submenu.style.transform = 'translateY(-10px)';
+        }, 10);
+        setTimeout(() => {
+            submenu.classList.remove('active');
+            submenu.style.maxHeight = '';
+            submenu.style.opacity = '';
+            submenu.style.transform = '';
+        }, 300);
+    } else {
+        // Animate opening
+        submenu.classList.add('active');
+        submenu.style.maxHeight = '0';
+        submenu.style.opacity = '0';
+        submenu.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            submenu.style.maxHeight = submenu.scrollHeight + 'px';
+            submenu.style.opacity = '1';
+            submenu.style.transform = 'translateY(0)';
+        }, 10);
+        setTimeout(() => {
+            submenu.style.maxHeight = '';
+            submenu.style.opacity = '';
+            submenu.style.transform = '';
+        }, 300);
+    }
 }
 
 // DateTime functionality
