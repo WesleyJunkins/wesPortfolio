@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initGalleryButtons();
     renderProjectImages();
     initStickyNav();
+    initDateTime();
 });
 
 // Section Switching Functionality
@@ -714,4 +715,30 @@ function toggleMobileMenu() {
     
     navButtons.classList.toggle('active');
     menuToggle.classList.toggle('active');
+}
+
+// DateTime functionality
+function initDateTime() {
+    function updateDateTime() {
+        const now = new Date();
+        const options = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short'
+        };
+        const dateTimeString = now.toLocaleDateString('en-US', options);
+        const datetimeElement = document.getElementById('current-datetime');
+        if (datetimeElement) {
+            datetimeElement.textContent = dateTimeString;
+        }
+    }
+    
+    // Update immediately and then every second
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
 }

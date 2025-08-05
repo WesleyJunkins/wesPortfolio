@@ -42,7 +42,7 @@ body {
 main {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: 2rem 1rem 4rem 1rem;
     padding-top: 8rem; /* Account for fixed navigation + extra space */
     display: flex;
     flex-direction: column;
@@ -518,23 +518,103 @@ hr {
     }
 }
 
-/* Custom scrollbar */
+/* Hide scrollbar */
 ::-webkit-scrollbar {
-    width: 10px;
+    display: none;
 }
 
-::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
+/* For Firefox */
+html {
+    scrollbar-width: none;
 }
 
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-    border-radius: 5px;
+/* For IE/Edge */
+body {
+    -ms-overflow-style: none;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+/* Footer */
+.footer {
+    position: fixed;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1000;
+    margin: 0 0.5rem;
+}
+
+.footer-scroll-bubble {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(1.2) contrast(1.1);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    padding: 0.25rem 0.1rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 400;
+    overflow: hidden;
+    box-shadow: 
+        0 4px 16px rgba(31, 38, 135, 0.15),
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    filter: contrast(1.1) brightness(1.05) saturate(1.1);
+    position: relative;
+    height: 100%;
+}
+
+.footer-datetime-bubble {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(1.2) contrast(1.1);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    box-shadow: 
+        0 4px 16px rgba(31, 38, 135, 0.15),
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    filter: contrast(1.1) brightness(1.05) saturate(1.1);
+    white-space: nowrap;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+.footer-scroll-text {
+    white-space: nowrap;
+    animation: scrollText 200s linear infinite;
+    display: inline-block;
+    padding: 0 20px;
+    font-weight: bold;
+    transform: translateX(100vw);
+}
+
+@keyframes scrollText {
+    0% {
+        transform: translateX(100vw);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Hide footer on mobile */
+@media (max-width: 1200px) {
+    .footer {
+        display: none;
+    }
 }
 
 .bubbles-container {
@@ -674,6 +754,7 @@ section:hover {
     margin-right: 0;
     position: relative;
     align-self: center;
+    z-index: 3;
 }
 
 .project-image-container img {
