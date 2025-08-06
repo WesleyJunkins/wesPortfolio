@@ -14,7 +14,19 @@
 
     <!-- Top Navigation Bar -->
     <nav class="top-nav">
-        <div class="nav-title">Wesley Junkins</div>
+        <div class="nav-brand">
+            <div class="nav-logo">
+                <a href="#" onclick="showSection('objective'); return false;">
+                    <img src="weslogo.png" alt="Wesley Junkins Logo" class="logo-image">
+                </a>
+            </div>
+            <div class="nav-title">Wesley Junkins</div>
+        </div>
+        <div class="nav-logo-mobile">
+            <a href="#" onclick="showSection('objective'); return false;">
+                <img src="weslogo.png" alt="Wesley Junkins Logo" class="logo-image-mobile">
+            </a>
+        </div>
         <div class="nav-buttons">
             <button class="button" onclick="showSection('objective')">About</button>
             <button class="button" onclick="showSection('links')">My Links</button>
@@ -92,6 +104,8 @@
                         pursuing a master's degree in computer science. He earned his bachelor's degree in computer
                         science with a minor in mathematics from the same institution in 2024.</p>
 
+                    <p></p>
+
                     <p class="project-description">As an undergraduate, Wesley conducted research in the
                         Human-Technology Interaction Lab (HTIL) under the mentorship of Dr. Chris Crawford. His work
                         spanned multiple areas of Human-Computer Interaction (HCI), including brain-computer interfaces
@@ -100,13 +114,18 @@
                         ongoing projects in the field. He also assisted in research studies, gained hands-on experience
                         with the IRB process, and collaborated closely with graduate researchers.</p>
 
+                    <p></p>
+
                     <p class="project-description">Wesley has been recognized for his academic excellence and leadership
                         through induction into several prestigious honor societies, including Phi Theta Kappa, Psi Beta,
                         Tau Beta Pi, Tau Sigma, Phi Kappa Phi, and Upsilon Pi Epsilon. He has received numerous awards
                         and honors that underscore his commitment to academic and professional growth.</p>
 
+                    <p></p>
+
                     <p class="project-description">As he pursues his master's and future doctoral studies, Wesley aims
-                        to deepen his expertise in HCI, BCIs, and XR. His ultimate goal is to become a professional
+                        to deepen his expertise in Human-Computer Interaction, Brain-Computer Interfaces, Extended
+                        Reality, and Machine Learning. His ultimate goal is to become a professional
                         researcher in academia or industry, driven by a passion for leveraging innovative technologies
                         to address complex technical and societal challenges.
                     </p>
@@ -162,6 +181,14 @@
 
         <section id="education">
             <h1 class="page-title">Education</h1>
+            <div class="bubble">
+                <h3>Master of Science in Computer Science | The University of Alabama</h3>
+                <h4>January, 2025 - May, 2026 (Expected)</h4>
+                <p>I am currently pursuing my master's degree in computer science. My thesis deals with using
+                    reinforcement learning to accurately control a drone in a circular-line following task. This will
+                    lead to lap-based drone races using real-time human EEG data to control the drone. I plan to defend
+                    my thesis and graduate in Spring 2026.</p>
+            </div>
             <div class="bubble">
                 <h3>Bachelor of Science in Computer Science | The University of Alabama</h3>
                 <h4>August, 2022 - December, 2024</h4>
@@ -232,7 +259,8 @@
                     page, and YouTube channel, ensuring content is up-to-date and aligned with organizational goals. I
                     collaborate with staff members to identify
                     and resolve technical issues, providing timely support and implementing solutions to enhance the
-                    church's technological capabilities and overall efficiency.</p>
+                    church's technological capabilities and overall efficiency. I also maintain the church's network
+                    infrastructure and diagnose and fix any network issues.</p>
             </div>
         </section>
 
@@ -269,6 +297,8 @@
             <div class="bubble">
                 <h3>Emerging Researcher Award | Psi Beta International Honor Society in Psychology</h3>
                 <h4>July, 2022</h4>
+                <p>I was awarded the MacMillan Emerging Researcher Award during my time in the Psi Beta Psychology honor
+                    society.</p>
                 <p><a href="https://psibeta.org/award-winners-2022/" target="_blank">Link to Award Information</a></p>
             </div>
             <div class="bubble">
@@ -416,7 +446,7 @@
             </div>
             <div class="bubble">
                 <h3>Phi Theta Kappa</h3>
-                <h4>Became Member: February, 2021</h4>
+                <h4>February, 2021</h4>
                 <p>Phi Theta Kappa (PTK) is an honor society for two-year institutions. After joining this
                     organization at Shelton State Community College, I was inducted as an officer. Specifically, I
                     was the vice president of Honors in Action. This was a research-centered role (and some of my
@@ -617,8 +647,7 @@
 
         <section id="projects">
             <h1 class="page-title">Projects</h1>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">Brain Drone Race</h3>
                     <p class="project-description">
@@ -647,8 +676,7 @@
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">Reinforcement Learning and Computer Vision for Circular Lap-Based
                         Physiological Drone Racing</h3>
@@ -668,44 +696,52 @@
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">Olfactory Human-Computer Interaction</h3>
                     <p class="project-description">
-                        WRITE A DESCRIPTION HERE LATER
+                        This project explores the use of olfactory senses in human-computer interaction. We built a
+                        system that allows the user to view an extended reality environment containing a Koi Fish pond.
+                        The user can lean towards or away from the pond. Behind the scenes, distance measurements,
+                        control the amount of scent the user receives. The aim of this study is to measure physiological
+                        responses to smell when trying to complete a task (e.g. counting the Koi Fish).
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">Quadruped Robotics and Extended Reality in Search and Rescue Tasks</h3>
                     <p class="project-description">
-                        WRITE A DESCRIPTION HERE LATER
+                        In this project, we aim to develop a complex system of communication between a quadruped robot
+                        and an extended reality device. The goal of this project is to assist in search and rescue
+                        operations where the user may not be able to traverse environment that a quadruped can. The
+                        interaction should ideally be seamless and require low cognitive workload.
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">Quadruped Robotics vs. Wheeled Mobile Robotics in K-12 STEM Education</h3>
                     <p class="project-description">
-                        WRITE A DESCRIPTION HERE LATER
+                        This project presents a user study comparing the use of a quadruped robot and a wheeled mobile
+                        robot in a K-12 STEM classroom. The goal of this project is to measure self-efficacy,
+                        collaboration, and engagement from students studying the same curriculum, but with different
+                        robots (quadruped vs. wheeled).
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">Extended Reality Brain Drone Racing</h3>
                     <p class="project-description">
-                        WRITE A DESCRIPTION HERE LATER
+                        The Brain-Drone Race (BDR) is a novel human-computer interaction (HCI) application that uses a
+                        participants' EEG signals to control a real drone. This project aims to recreate the experience
+                        inside an extended reality environment. The goal of this project is to explore the differences
+                        in user engagement and performance using the two systems.
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">PhysioLab</h3>
                     <p class="project-description">
@@ -713,8 +749,7 @@
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble"
-                data-images='["projectimages/test_project/qwe.jpeg", "projectimages/test_project/asd.jpeg", "projectimages/test_project/zxc.png"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
                     <h3 class="project-title">Machine Learning Object Detection and Manipulation in Extended Reality
                     </h3>
