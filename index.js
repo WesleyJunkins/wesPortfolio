@@ -91,7 +91,7 @@ function initSectionSwitching() {
             });
             
             // Close mobile menu
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1200) {
                 toggleMobileMenu();
             }
         });
@@ -125,7 +125,7 @@ function initSectionSwitching() {
                 });
                 
                 // Close mobile menu
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth <= 1200) {
                     toggleMobileMenu();
                 }
             }
@@ -790,7 +790,7 @@ function initStickyNav() {
     navButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             // Close mobile menu when a button is clicked
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1200) {
                 toggleMobileMenu();
             }
         });
@@ -804,7 +804,7 @@ function initStickyNav() {
             });
             
             // Close mobile menu when a dropdown item is clicked
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1200) {
                 toggleMobileMenu();
             }
         });
@@ -864,16 +864,11 @@ function positionDropdown(dropdownMenu) {
 
 // Mobile menu toggle function
 function toggleMobileMenu() {
-    const navButtons = document.querySelector('.nav-buttons');
     const mobileNavButtons = document.querySelector('.mobile-nav-buttons');
     const menuToggle = document.querySelector('.mobile-menu-toggle');
     
-    // Toggle between desktop and mobile nav
-    if (window.innerWidth <= 768) {
-        mobileNavButtons.classList.toggle('active');
-    } else {
-        navButtons.classList.toggle('active');
-    }
+    // Toggle mobile nav menu
+    mobileNavButtons.classList.toggle('active');
     menuToggle.classList.toggle('active');
 }
 
