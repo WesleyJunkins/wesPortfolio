@@ -4,10 +4,12 @@
 <head>
     <meta charset="UTF-8" />
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-    <link rel="shortcut icon" href="favicon-32x32.png" />
+    <link rel="icon" type="image/x-icon" href="weslogo/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="weslogo/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="weslogo/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="weslogo/apple-touch-icon.png" />
+    <link rel="shortcut icon" href="weslogo/favicon.ico" />
+    <link rel="manifest" href="site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- SEO Meta Tags -->
@@ -25,7 +27,7 @@
         content="Graduate student at The University of Alabama researching HCI, BCI, XR, and Machine Learning." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://wesleyjunkins.com/" />
-    <meta property="og:image" content="https://wesleyjunkins.com/weslogo.png" />
+    <meta property="og:image" content="https://wesleyjunkins.com/weslogo/weslogo.png" />
     <meta property="og:site_name" content="Wesley Junkins Portfolio" />
 
     <!-- Twitter Card Meta Tags -->
@@ -33,11 +35,16 @@
     <meta name="twitter:title" content="Wesley Junkins - Computer Science Researcher" />
     <meta name="twitter:description"
         content="Graduate student at The University of Alabama researching HCI, BCI, XR, and Machine Learning." />
-    <meta name="twitter:image" content="https://wesleyjunkins.com/weslogo.png" />
+    <meta name="twitter:image" content="https://wesleyjunkins.com/weslogo/weslogo.png" />
 
     <!-- Additional SEO -->
     <link rel="canonical" href="https://wesleyjunkins.com/" />
     <link rel="sitemap" type="application/xml" title="Sitemap" href="https://wesleyjunkins.com/sitemap.xml" />
+    
+    <!-- Additional Favicon Meta Tags -->
+    <meta name="msapplication-TileColor" content="#2a3f98" />
+    <meta name="msapplication-TileImage" content="weslogo/favicon-32x32.png" />
+    <meta name="theme-color" content="#2a3f98" />
 
     <link rel="stylesheet" href="./index.css" type="text/css" />
 
@@ -53,7 +60,7 @@
             "name": "The University of Alabama"
         },
         "url": "https://wesleyjunkins.com/",
-        "image": "https://wesleyjunkins.com/wes.jpg",
+        "image": "https://wesleyjunkins.com/projectimages/wes.jpg",
         "sameAs": [
             "https://www.linkedin.com/in/wesley-junkins-3839411b3/",
             "https://github.com/WesleyJunkins",
@@ -82,14 +89,14 @@
         <div class="nav-brand">
             <div class="nav-logo">
                 <a href="#" onclick="showSection('objective'); return false;">
-                    <img src="weslogo.png" alt="Wesley Junkins Logo" class="logo-image">
+                    <img src="weslogo/weslogo.png" alt="Wesley Junkins Logo" class="logo-image">
                 </a>
             </div>
             <div class="nav-title">Wesley Junkins</div>
         </div>
         <div class="nav-logo-mobile">
             <a href="#" onclick="showSection('objective'); return false;">
-                <img src="weslogo.png" alt="Wesley Junkins Logo" class="logo-image-mobile">
+                <img src="weslogo/weslogo.png" alt="Wesley Junkins Logo" class="logo-image-mobile">
             </a>
         </div>
         <div class="nav-buttons">
@@ -157,7 +164,7 @@
 
     <main>
         <section id="objective">
-            <div class="bubble project-bubble" data-images='["wes.jpg"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/wes.jpg"]'>
                 <div class="project-content">
                     <h3 class="project-title"><a href="old.html"
                             style="text-decoration: none; color: inherit;">A</a>bout</h3>
@@ -316,7 +323,7 @@
                 <h3>IT | Mt. Pleasant Baptist Church, Gordo, AL</h3>
                 <h4>October, 2020 - Present</h4>
                 <p>In my role as IT Director, I oversee the management and maintenance of the church's digital
-                    presence, including <a href="http://mpbcgordo.com" target="_blank">the website</a>, Facebook
+                    presence, including <a href="https://mpbcgordo.com" target="_blank">the website</a>, Facebook
                     page, and YouTube channel, ensuring content is up-to-date and aligned with organizational goals. I
                     collaborate with staff members to identify
                     and resolve technical issues, providing timely support and implementing solutions to enhance the
@@ -471,7 +478,7 @@
                 <h4>June, 2023</h4>
                 <p>Tau Sigma is a national honor society for students who transfer to a four-year institution from a
                     community college.</p>
-                <p><a href="http://www.tausigmanhs.org/" target="_blank">Link to Organization Website</a></p>
+                <p><a href="https://www.tausigmanhs.org/" target="_blank">Link to Organization Website</a></p>
             </div>
             <div class="bubble">
                 <h3>Tau Beta Pi</h3>
@@ -708,7 +715,7 @@
 
         <section id="projects">
             <h1 class="page-title">Projects</h1>
-            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/BDR20232024_project/IMG_5665.png", "projectimages/BDR20232024_project/IMG_5641.png", "projectimages/BDR20232024_project/IMG_5640.png", "projectimages/BDR20232024_project/IMG_6330.png", "projectimages/BDR20232024_project/IMG_6334.png", "projectimages/BDR20232024_project/IMG_6329.png"]'>
                 <div class="project-content">
                     <h3 class="project-title">Brain Drone Race</h3>
                     <p class="project-description">
@@ -780,7 +787,7 @@
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
+            <div class="bubble project-bubble">
                 <div class="project-content">
                     <h3 class="project-title">Quadruped Robotics vs. Wheeled Mobile Robotics in K-12 STEM Education</h3>
                     <p class="project-description">
@@ -802,7 +809,7 @@
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/physiolab_project/pl1.png", "projectimages/physiolab_project/pl2.png"]'>
                 <div class="project-content">
                     <h3 class="project-title">PhysioLab</h3>
                     <p class="project-description">
@@ -826,18 +833,62 @@
                     </p>
                 </div>
             </div>
-            <div class="bubble project-bubble" data-images='["projectimages/ERN2025_project/ERN23-949.jpg", "projectimages/ERN2025_project/ERN23-950.jpg"]'>
+            <div class="bubble project-bubble" data-images='["projectimages/placeholder.webp"]'>
                 <div class="project-content">
-                    <h3 class="project-title">Developing Green Solvents to Dissolve Plastic Waste
+                    <h3 class="project-title">Smart Controller App
+                    </h3>
+                    <p class="project-description">
+                        For my computer science capstone project, my team and I developed a mobile app that allows the
+                        user to control the operations of a home-heating stove remotely. The app was developed using
+                        Flutter and was available on both iOS and Android. The app connected to a Raspberry Pi over the
+                        internet via MQTT. I built a program on the Raspberry Pi that converted MQTT messages to
+                        bluetooth messages and sent them to the stove's controller. The Pi also listened for bluetooth
+                        messages from the stove's controller and converted them into MQTT messages which were sent back
+                        to the mobile app. This system allowed the user to read information from the stove and control
+                        the stove from the app. Additionally, the Pi connected to a Firebase database, which was capable
+                        of storing data from the stove over time. The mobile app was able to connect to that database to
+                        read the data from the stove, which was displayed as a time series. It was also able to add
+                        multiple stoves and users and connect the users to their stoves so that certain users could only
+                        read the data from their linked stove.
+                    </p>
+                </div>
+            </div>
+            <div class="bubble project-bubble"
+                data-images='["projectimages/ERN2022_project/IMG_1430.JPG", "projectimages/ERN2022_project/IMG_1464.JPG", "projectimages/ERN2022_project/IMG_2170.JPG", "projectimages/ERN2022_project/IMG_2169.JPG", "projectimages/ERN2022_project/IMG_2172.JPG", "projectimages/ERN2022_project/IMG_1211.JPG", "projectimages/ERN2022_project/IMG_1239.JPG", "projectimages/ERN2022_project/IMG_1216.JPG", "projectimages/ERN2022_project/IMG_1422 00002.png", "projectimages/ERN2022_project/IMG_1422 00004.png", "projectimages/ERN2022_project/ERN23-950.jpg", "projectimages/ERN2022_project/ERN23-949.jpg"]'>
+                <div class="project-content">
+                    <h3 class="project-title">Synthesizing Green Solvents to Dissolve Plastic Waste
                     </h3>
                     <p class="project-description">
                         In the summer of 2022, I worked with a team of researchers from The University of Alabama's
                         department of chemical and biological engineering in a Research Experience for Undergraduates
                         (REU) project. In this project, I assisted a graduate student in reading research papers and
                         developing his solvents. While I do not have a great understanding of chemical engineering, this
-                        project taught me how to follow experiements from previous researchers to perform our own
+                        project taught me how to follow experiments from previous researchers to perform our own
                         experiments. At the conclusion of this REU project, I developed a poster of our findings and
                         presented it at the 2023 Emerging Researchers National (ERN) conference in Washington D.C.
+                    </p>
+                </div>
+            </div>
+            <div class="bubble project-bubble"
+                data-images='["projectimages/SSCCHIA_project/IMG_9275.JPG", "projectimages/SSCCHIA_project/IMG_9278.JPG"]'>
+                <div class="project-content">
+                    <h3 class="project-title">The Effect of Community College Students' Mental Health on Future
+                        Generations
+                    </h3>
+                    <p class="project-description">
+                        As the vice president of honors in action of our chapter of Phi Theta Kappa, I was tasked with
+                        leading the other officers and members in a research project. This project explored the effect
+                        of community college students' mental health on future generations. When brainstorming the
+                        target audience for our research, community college students were chosen because they will be
+                        the ones who raise the next generation of students. Also, this project took place at a community
+                        college, so we were able to easily access information from other community colleges in the
+                        nearby counties. We conducted a literature review to understand what research and field work had
+                        already been done. We also surveyed students from surrounding community colleges. Our findings
+                        led us to develop a comprehensive refresh of Shelton State Community College's community
+                        resource index. Additionally, we hosted a mental health fair on campus. This event served to
+                        introduce students to community resources that they may not have known about. Feedback from this
+                        program was overwhelmingly positive as students learned about valuable community resources for
+                        the first time.
                     </p>
                 </div>
             </div>
@@ -933,7 +984,8 @@
                         schools.</p>
                 </div>
             </div>
-            <div class="bubble project-bubble">
+            <div class="bubble project-bubble"
+                data-images='["projectimages/icra2025_service/icra1.jpeg"]'>
                 <div class="project-content">
                     <h3 class="project-title">ICRA K-12 Workshop</h3>
                     <h4>May, 2025</h4>
