@@ -12,7 +12,59 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProjectImages();
     initStickyNav();
     initDateTime();
+    
+    // Preload all images in the background
+    preloadAllImages();
 });
+
+// Image preloader function
+function preloadAllImages() {
+    const imagePaths = new Set();
+    
+    // Collect all image paths from data-images attributes
+    document.querySelectorAll('.project-bubble[data-images]').forEach(bubble => {
+        const imagesAttr = bubble.getAttribute('data-images');
+        try {
+            const images = JSON.parse(imagesAttr);
+            if (Array.isArray(images)) {
+                images.forEach(imgPath => imagePaths.add(imgPath));
+            }
+        } catch (e) {
+            console.warn('Failed to parse data-images attribute:', imagesAttr);
+        }
+    });
+    
+    // Also collect logo and favicon images
+    imagePaths.add('weslogo/weslogo.png');
+    imagePaths.add('weslogo/favicon.ico');
+    imagePaths.add('weslogo/favicon-32x32.png');
+    imagePaths.add('weslogo/favicon-16x16.png');
+    imagePaths.add('weslogo/apple-touch-icon.png');
+    imagePaths.add('projectimages/wes.jpg');
+    
+    // Preload all images
+    const preloadPromises = Array.from(imagePaths).map(imgPath => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                console.log(`Preloaded: ${imgPath}`);
+                resolve(imgPath);
+            };
+            img.onerror = () => {
+                console.warn(`Failed to preload: ${imgPath}`);
+                reject(imgPath);
+            };
+            img.src = imgPath;
+        });
+    });
+    
+    // Log progress
+    Promise.allSettled(preloadPromises).then(results => {
+        const successful = results.filter(r => r.status === 'fulfilled').length;
+        const failed = results.filter(r => r.status === 'rejected').length;
+        console.log(`Image preloading complete: ${successful} successful, ${failed} failed`);
+    });
+}
 
 // Section Switching Functionality
 function initSectionSwitching() {
