@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <!-- Prevent search engine indexing -->
+    <meta name="robots" content="noindex, nofollow" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="weslogo/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="weslogo/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="weslogo/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="weslogo/apple-touch-icon.png" />
+    <link rel="shortcut icon" href="weslogo/favicon.ico" />
+    <link rel="manifest" href="site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO Meta Tags -->
+    <title>Archive - Wesley Junkins</title>
+    <meta name="description" content="Archive page" />
+    <meta name="author" content="Wesley Junkins" />
+
+    <!-- Additional Favicon Meta Tags -->
+    <meta name="msapplication-TileColor" content="#2a3f98" />
+    <meta name="msapplication-TileImage" content="weslogo/favicon-32x32.png" />
+    <meta name="theme-color" content="#2a3f98" />
+
+    <link rel="stylesheet" href="./index.css" type="text/css" />
+</head>
+
+<body>
+    <canvas id="bg"></canvas>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="nav-logo">
+                <a href="/">
+                    <img src="weslogo/weslogo.png" alt="Wesley Junkins Logo" class="logo-image">
+                </a>
+            </div>
+            <div class="nav-title">Wesley Junkins</div>
+        </div>
+        <div class="nav-logo-mobile">
+            <a href="/">
+                <img src="weslogo/weslogo.png" alt="Wesley Junkins Logo" class="logo-image-mobile">
+            </a>
+        </div>
+        <div class="nav-buttons">
+            <button class="button" onclick="window.location.href='/'">Home</button>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav-buttons">
+            <button class="button" onclick="window.location.href='/'">Home</button>
+        </div>
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </nav>
+
+    <main>
+        <section id="archive">
+            <h1 class="page-title">Archive</h1>
+            <div class="bubble">
+                <h3>Archive Content</h3>
+                <p class="project-description">
+                    This is the archive page. This page is only accessible via direct URL and is not indexed by search engines.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-scroll-bubble">
+            <div class="footer-scroll-text">
+                Archive Page - Not indexed by search engines
+            </div>
+        </div>
+        <div class="footer-datetime-bubble">
+            <span id="current-datetime"></span>
+        </div>
+    </footer>
+
+    <div id="app"></div>
+    <script src="index.js"></script>
+    <script>
+        // Override showSection to prevent navigation issues on archive page
+        function showSection(sectionName) {
+            // Archive page doesn't use section switching
+            return false;
+        }
+        
+        // Initialize date/time
+        function initDateTime() {
+            function updateDateTime() {
+                const now = new Date();
+                const options = {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    timeZoneName: 'short'
+                };
+                const dateTimeString = now.toLocaleDateString('en-US', options);
+                const datetimeElement = document.getElementById('current-datetime');
+                if (datetimeElement) {
+                    datetimeElement.textContent = dateTimeString;
+                }
+            }
+            
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            initDateTime();
+        });
+    </script>
+</body>
+
+</html>
+

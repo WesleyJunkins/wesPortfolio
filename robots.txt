@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /archive
 
 # Sitemap location
 Sitemap: https://wesleyjunkins.com/sitemap.xml
