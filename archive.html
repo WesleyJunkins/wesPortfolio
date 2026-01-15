@@ -25,6 +25,280 @@
     <meta name="theme-color" content="#2a3f98" />
 
     <link rel="stylesheet" href="./index.css" type="text/css" />
+    <style>
+        /* Password Protection Styles */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 20, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .password-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .password-modal {
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(6px) saturate(1.05) contrast(1.04);
+            border-radius: 36px;
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            outline: 1px solid #fff;
+            outline-offset: -2px;
+            box-shadow:
+                0 4px 32px 0 rgba(31, 38, 135, 0.10),
+                0 1.5px 8px 0 rgba(31, 38, 135, 0.08),
+                0 0 0 2px rgba(255,255,255,0.08),
+                0 0 40px 0 rgba(255,255,255,0.10),
+                inset 0 2px 16px 0 rgba(255,255,255,0.18),
+                inset 0 -8px 32px 0 rgba(31,38,135,0.10);
+            padding: 3rem 2.5rem;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            filter: contrast(1.06) brightness(1.05) saturate(1.04);
+        }
+
+        .password-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7);
+            background-size: 300% 300%;
+            animation: textGradient 3s ease infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .password-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .password-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .password-input {
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(6px) saturate(1.05) contrast(1.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            color: #fff;
+            font-size: 1.1rem;
+            outline: 1px solid #fff;
+            outline-offset: -2px;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .password-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .password-input:focus {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow:
+                0 4px 16px 0 rgba(31, 38, 135, 0.18),
+                0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 0 20px rgba(255, 255, 255, 0.15);
+        }
+
+        .password-submit-btn {
+            margin-top: 0.5rem;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .password-error {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            min-height: 1.5rem;
+            margin-top: -0.5rem;
+            text-align: center;
+        }
+
+        @media (max-width: 700px) {
+            .password-modal {
+                padding: 2rem 1.5rem;
+                border-radius: 24px;
+            }
+
+            .password-title {
+                font-size: 1.5rem;
+            }
+
+            .password-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .password-input {
+                padding: 0.8rem 1.2rem;
+                font-size: 1rem;
+            }
+        }
+        
+        /* Archive Content Styles */
+        .breadcrumb-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .breadcrumb-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(6px) saturate(1.05) contrast(1.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            border-radius: 15px;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: 1px solid rgba(255, 255, 255, 0.1);
+            outline-offset: -2px;
+        }
+        
+        .breadcrumb-item:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .breadcrumb-home {
+            font-weight: 600;
+        }
+        
+        .breadcrumb-separator {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1rem;
+        }
+        
+        /* Folder Bubbles */
+        .archive-folder-bubble {
+            margin-bottom: 2rem;
+        }
+        
+        .archive-folder-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .archive-folder-content h3 {
+            flex: 1;
+            margin: 0;
+        }
+        
+        .archive-nav-arrow {
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(6px) saturate(1.05) contrast(1.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.5rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: 1px solid rgba(255, 255, 255, 0.1);
+            outline-offset: -2px;
+            flex-shrink: 0;
+        }
+        
+        .archive-nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(5px) scale(1.1);
+        }
+        
+        /* Media Bubbles (Images and Videos) */
+        .archive-media-bubble {
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .archive-media-bubble:hover {
+            transform: scale(1.02);
+        }
+        
+        .archive-thumbnail-container {
+            margin-top: 1rem;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .archive-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        
+        .archive-thumbnail-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        @media (max-width: 700px) {
+            .breadcrumb-container {
+                margin-bottom: 1.5rem;
+            }
+            
+            .breadcrumb-item {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            .archive-nav-arrow {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .archive-thumbnail-container {
+                height: 200px;
+            }
+            
+            .archive-folder-content h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -60,68 +334,372 @@
         </button>
     </nav>
 
-    <main>
+    <!-- Password Protection Overlay -->
+    <div id="password-overlay" class="password-overlay">
+        <div class="password-modal">
+            <h2 class="password-title">Archive Access</h2>
+            <p class="password-subtitle">Please enter the password to access this page</p>
+            <form id="password-form" class="password-form">
+                <input 
+                    type="password" 
+                    id="password-input" 
+                    class="password-input" 
+                    placeholder="Enter password" 
+                    autocomplete="off"
+                    required
+                    autofocus
+                />
+                <div id="password-error" class="password-error"></div>
+                <button type="submit" class="button password-submit-btn">Enter</button>
+            </form>
+        </div>
+    </div>
+
+    <main id="archive-content" style="display: none;">
         <section id="archive">
             <h1 class="page-title">Archive</h1>
-            <div class="bubble">
-                <h3>Archive Content</h3>
-                <p class="project-description">
-                    This is the archive page. This page is only accessible via direct URL and is not indexed by search engines.
-                </p>
+            
+            <!-- Breadcrumb Navigation -->
+            <div id="breadcrumb-container" class="breadcrumb-container"></div>
+            
+            <!-- Archive Content Container -->
+            <div id="archive-container">
+                <div class="bubble">
+                    <h3>Loading archive...</h3>
+                    <p class="project-description">Please wait while we load the archive content.</p>
+                </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-scroll-bubble">
-            <div class="footer-scroll-text">
-                Archive Page - Not indexed by search engines
-            </div>
-        </div>
-        <div class="footer-datetime-bubble">
-            <span id="current-datetime"></span>
-        </div>
-    </footer>
-
     <div id="app"></div>
     <script src="index.js"></script>
     <script>
+        // Password protection
+        const CORRECT_PASSWORD = 'junkins35466'; // Change this to your desired password
+        
         // Override showSection to prevent navigation issues on archive page
         function showSection(sectionName) {
             // Archive page doesn't use section switching
             return false;
         }
         
-        // Initialize date/time
-        function initDateTime() {
-            function updateDateTime() {
-                const now = new Date();
-                const options = {
-                    weekday: 'short',
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    timeZoneName: 'short'
-                };
-                const dateTimeString = now.toLocaleDateString('en-US', options);
-                const datetimeElement = document.getElementById('current-datetime');
-                if (datetimeElement) {
-                    datetimeElement.textContent = dateTimeString;
+        // Show content and hide password overlay
+        function showContent() {
+            const overlay = document.getElementById('password-overlay');
+            const content = document.getElementById('archive-content');
+            
+            if (overlay && content) {
+                overlay.classList.add('hidden');
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    content.style.display = 'block';
+                    // Load archive content after showing
+                    loadArchiveContent();
+                }, 300);
+            }
+        }
+        
+        // Archive navigation state
+        let archiveManifest = null;
+        let currentPath = []; // Array of folder names representing current path
+        
+        // Load and display archive content
+        async function loadArchiveContent() {
+            const container = document.getElementById('archive-container');
+            if (!container) return;
+            
+            try {
+                // Load manifest.json
+                const response = await fetch('archive/manifest.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load archive manifest');
+                }
+                
+                archiveManifest = await response.json();
+                
+                // Reset to root level
+                currentPath = [];
+                displayCurrentLevel();
+                
+            } catch (error) {
+                console.error('Error loading archive:', error);
+                const container = document.getElementById('archive-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="bubble">
+                            <h3>Error Loading Archive</h3>
+                            <p class="project-description">
+                                Unable to load archive content. Please make sure the manifest.json file exists in the archive folder.
+                                <br><br>
+                                Error: ${error.message}
+                            </p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Get current level data based on navigation path
+        function getCurrentLevelData() {
+            // Root level - return the manifest's folders structure
+            if (currentPath.length === 0) {
+                return archiveManifest;
+            }
+            
+            let current = archiveManifest;
+            
+            // Navigate through the path
+            for (const folderName of currentPath) {
+                if (current.folders && current.folders[folderName]) {
+                    current = current.folders[folderName];
+                } else {
+                    return null;
                 }
             }
             
-            updateDateTime();
-            setInterval(updateDateTime, 1000);
+            return current;
+        }
+        
+        // Display current level (folders and files)
+        function displayCurrentLevel() {
+            const container = document.getElementById('archive-container');
+            const breadcrumbContainer = document.getElementById('breadcrumb-container');
+            
+            if (!container || !archiveManifest) return;
+            
+            const currentLevel = getCurrentLevelData();
+            if (!currentLevel) {
+                container.innerHTML = '<div class="bubble"><h3>Error</h3><p>Invalid path</p></div>';
+                return;
+            }
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Update breadcrumb
+            updateBreadcrumb(breadcrumbContainer);
+            
+            // Display folders first
+            if (currentLevel.folders) {
+                const folderNames = Object.keys(currentLevel.folders).sort();
+                folderNames.forEach(folderName => {
+                    const folderBubble = createFolderBubble(folderName);
+                    container.appendChild(folderBubble);
+                });
+            }
+            
+            // Display files (images and videos)
+            if (currentLevel.files && currentLevel.files.length > 0) {
+                currentLevel.files.forEach(file => {
+                    const mediaBubble = createMediaBubble(file);
+                    container.appendChild(mediaBubble);
+                });
+            }
+            
+            // If no content
+            if ((!currentLevel.folders || Object.keys(currentLevel.folders).length === 0) &&
+                (!currentLevel.files || currentLevel.files.length === 0)) {
+                container.innerHTML = '<div class="bubble"><h3>Empty Folder</h3><p class="project-description">This folder is empty.</p></div>';
+            }
+        }
+        
+        // Create folder bubble with navigation arrow
+        function createFolderBubble(folderName) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble archive-folder-bubble';
+            
+            const content = document.createElement('div');
+            content.className = 'archive-folder-content';
+            
+            const header = document.createElement('h3');
+            header.className = 'project-title';
+            header.textContent = folderName;
+            content.appendChild(header);
+            
+            const arrowButton = document.createElement('button');
+            arrowButton.className = 'archive-nav-arrow';
+            arrowButton.innerHTML = '→';
+            arrowButton.title = `Open ${folderName}`;
+            arrowButton.addEventListener('click', () => {
+                navigateIntoFolder(folderName);
+            });
+            content.appendChild(arrowButton);
+            
+            bubble.appendChild(content);
+            return bubble;
+        }
+        
+        // Create media bubble (image or video) with thumbnail
+        function createMediaBubble(file) {
+            const bubble = document.createElement('div');
+            bubble.className = `bubble archive-media-bubble archive-${file.type}-bubble`;
+            
+            const header = document.createElement('h3');
+            header.className = 'project-title';
+            header.textContent = file.name;
+            bubble.appendChild(header);
+            
+            // Thumbnail container
+            const thumbnailContainer = document.createElement('div');
+            thumbnailContainer.className = 'archive-thumbnail-container';
+            
+            if (file.type === 'image') {
+                const img = document.createElement('img');
+                img.src = `archive/${file.path}`;
+                img.alt = file.name;
+                img.className = 'archive-thumbnail';
+                img.loading = 'lazy';
+                thumbnailContainer.appendChild(img);
+            } else if (file.type === 'video') {
+                const video = document.createElement('video');
+                video.src = `archive/${file.path}`;
+                video.className = 'archive-thumbnail';
+                video.preload = 'metadata';
+                video.muted = true;
+                // Try to show first frame
+                video.addEventListener('loadedmetadata', () => {
+                    video.currentTime = 0.1; // Show frame at 0.1 seconds
+                });
+                thumbnailContainer.appendChild(video);
+            }
+            
+            bubble.appendChild(thumbnailContainer);
+            
+            // Click to open in new tab
+            bubble.style.cursor = 'pointer';
+            bubble.addEventListener('click', () => {
+                window.open(`archive/${file.path}`, '_blank');
+            });
+            
+            return bubble;
+        }
+        
+        // Navigate into a folder
+        function navigateIntoFolder(folderName) {
+            currentPath.push(folderName);
+            displayCurrentLevel();
+        }
+        
+        // Navigate back
+        function navigateBack() {
+            if (currentPath.length > 0) {
+                currentPath.pop();
+                displayCurrentLevel();
+            }
+        }
+        
+        // Update breadcrumb navigation
+        function updateBreadcrumb(container) {
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (currentPath.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'flex';
+            
+            // Home button
+            const homeBtn = document.createElement('button');
+            homeBtn.className = 'breadcrumb-item breadcrumb-home';
+            homeBtn.textContent = 'Archive';
+            homeBtn.addEventListener('click', () => {
+                currentPath = [];
+                displayCurrentLevel();
+            });
+            container.appendChild(homeBtn);
+            
+            // Path items
+            currentPath.forEach((folderName, index) => {
+                const separator = document.createElement('span');
+                separator.className = 'breadcrumb-separator';
+                separator.textContent = ' / ';
+                container.appendChild(separator);
+                
+                const pathItem = document.createElement('button');
+                pathItem.className = 'breadcrumb-item';
+                pathItem.textContent = folderName;
+                pathItem.addEventListener('click', () => {
+                    currentPath = currentPath.slice(0, index + 1);
+                    displayCurrentLevel();
+                });
+                container.appendChild(pathItem);
+            });
+        }
+        
+        // Handle password form submission
+        function handlePasswordSubmit(e) {
+            e.preventDefault();
+            
+            const passwordInput = document.getElementById('password-input');
+            const errorDiv = document.getElementById('password-error');
+            const password = passwordInput.value.trim();
+            
+            // Clear previous error
+            if (errorDiv) {
+                errorDiv.textContent = '';
+            }
+            
+            // Check password
+            if (password === CORRECT_PASSWORD) {
+                showContent();
+            } else {
+                // Show error
+                if (errorDiv) {
+                    errorDiv.textContent = 'Incorrect password. Please try again.';
+                }
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Add shake animation
+                const modal = document.querySelector('.password-modal');
+                if (modal) {
+                    modal.style.animation = 'shake 0.5s';
+                    setTimeout(() => {
+                        modal.style.animation = '';
+                    }, 500);
+                }
+            }
         }
         
         // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            initDateTime();
+            // Always show password overlay on page load (including refresh)
+            const overlay = document.getElementById('password-overlay');
+            const content = document.getElementById('archive-content');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+            if (content) {
+                content.style.display = 'none';
+            }
+            
+            // Set up password form
+            const passwordForm = document.getElementById('password-form');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', handlePasswordSubmit);
+            }
+            
+            // Focus password input
+            const passwordInput = document.getElementById('password-input');
+            if (passwordInput) {
+                passwordInput.focus();
+            }
         });
+        
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                20%, 40%, 60%, 80% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 
