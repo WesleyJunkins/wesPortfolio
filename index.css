@@ -177,12 +177,10 @@ body {
   80% { --lava-now: #7d4f9c; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .lava__blob,
-  .nav {
-    animation: none;
-  }
-}
+/* The ambient lava + nav glow are intentionally kept animating on ALL devices
+   (including mobile and prefers-reduced-motion) — the moving, colour-cycling
+   backdrop is core to the design. Re-add a prefers-reduced-motion guard here if
+   accessibility compliance is needed. */
 
 /* ---------------------------------------------------------
    CONTENT — one section ("page") visible at a time
@@ -786,6 +784,21 @@ section.is-active .bubble {
    (hover:none + pointer:coarse) targets real touch devices in any orientation;
    the max-width fallback lets you preview the lighter version by resizing. */
 @media (hover: none) and (pointer: coarse), (max-width: 600px) {
+  /* Mobile glass: swap the heavy url() displacement refraction (or, on WebKit /
+     iOS where url() backdrop-filters aren't supported, the weak 2px fallback)
+     for a proper frosted blur on every dock + pill. !important beats the inline
+     backdrop-filter:url() the engine sets per element. */
+  .nav,
+  .btn,
+  .bubble,
+  .dropdown-menu {
+    -webkit-backdrop-filter: blur(14px) saturate(1.4) !important;
+    backdrop-filter: blur(14px) saturate(1.4) !important;
+  }
+
+  /* Lava: drop the heavy goo filter and soften the blobs with a transparent-
+     edged gradient. Speed the drift + colour cycle up — without the goo morphing
+     the slow desktop pace (~480s) read as static here. */
   .lava {
     filter: none;
   }
@@ -796,6 +809,7 @@ section.is-active .bubble {
       var(--c2) 50%,
       transparent 78%
     );
+    animation-duration: 90s, 90s !important; /* drift, colour */
   }
 }
 
