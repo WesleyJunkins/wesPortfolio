@@ -7,7 +7,52 @@
     box-sizing: border-box;
 }
 
-/* Canvas */
+/* ===== Liquid Glass design tokens =====
+   ONE recipe drives every glassy surface (bubbles, nav, buttons, menus, footer,
+   modal) so they read as the same sheet of glass.
+
+   These tokens feed the unified surface rule below and a few smaller glassy bits
+   (dropdown items, etc.). The refraction itself is built per-element by glass.js
+   (a displacement map sized to each pane); tune its strength via the TUNING object
+   there. Safari/Firefox fall back to the CSS blur/saturate frost. */
+:root {
+    /* Corner radius — one value, used by every glass surface (matches the nav).
+       glass.js reads each element's COMPUTED radius so the displacement map's
+       rounded corners line up with the real pane. */
+    --lg-radius: 22px;
+
+    /* Clear glass: only a whisper of blur so you can see the background through
+       it, with saturation cranked so those colors stay vivid behind the pane.
+       Readability comes from blurring the BACKGROUND, not frosting the glass. */
+    --lg-blur: 2.5px;
+    --lg-saturate: 1.7;
+
+    /* Frost: the faint tint of the glass itself. Kept tiny so the refraction
+       (not a milky fill) is what reads. EXAMPLE used ~0 for pill/bubble. */
+    --lg-frost: 0.05;
+
+    /* Translucent fill — light enough to see through, not invisible */
+    --lg-tint: rgba(255, 255, 255, 0.055);
+    --lg-tint-hover: rgba(255, 255, 255, 0.10);
+
+    /* Bright, thin specular edge (the lit rim of the glass sheet) */
+    --lg-stroke: rgba(255, 255, 255, 0.55);
+
+    /* Reusable specular + lift shadow stack:
+       soft drop shadow to float the pane, a crisp top highlight where light
+       pools, a faint bottom rim, and an inner bloom for glass thickness */
+    --lg-shadow:
+        0 12px 40px rgba(10, 12, 40, 0.30),
+        0 2px 8px rgba(10, 12, 40, 0.18),
+        inset 0 1px 1px rgba(255, 255, 255, 0.7),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.14),
+        inset 0 0 24px rgba(255, 255, 255, 0.05);
+}
+
+/* Canvas — the animated lava background.
+   Heavily blurred and scaled slightly past the viewport (so the soft edges fall
+   off-screen) to push it back as a calm, dreamy wash. Keeping the colour but
+   killing the detail is what lets the clear glass stay readable on top. */
 canvas {
     position: fixed;
     top: 0;
@@ -15,6 +60,30 @@ canvas {
     width: 100%;
     height: 100%;
     z-index: -1;
+    filter: blur(24px) saturate(1.1);
+    transform: scale(1.1);
+    transform-origin: center;
+}
+
+/* Detail layer behind the glass.
+   The canvas above is blurred 24px, so there is nothing crisp for a glass pane to
+   refract. This faint, UNBLURRED grid sits just above the canvas (same z-index, but
+   later in the DOM) and below all content, giving the liquid-glass lens sharp lines
+   to bend — without making the backdrop busy. Tune visibility via --grid-line. */
+.bg-detail {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    --grid-size: 44px;
+    --grid-line: rgba(255, 255, 255, 0.07);
+    background-image:
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(0deg, var(--grid-line) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    /* Fade the grid toward the edges so it reads as a calm texture, not a sheet */
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, transparent 95%);
+    mask-image: radial-gradient(ellipse at center, #000 35%, transparent 95%);
 }
 
 /* Body */
@@ -23,7 +92,8 @@ body {
     color: #fff;
     background: linear-gradient(45deg, #2a3f98 0%, #3a2a6a 25%, #a15ac8 50%, #a12a4a 75%, #1a6ec8 100%);
     background-size: 400% 400%;
-    animation: gradientShift 60s ease-in-out infinite;
+    /* Slow, calm colour drift (CSS time-based, so identical on every device) */
+    animation: gradientShift 140s ease-in-out infinite;
     line-height: 1.6;
     text-align: center;
     margin: 0;
@@ -77,22 +147,60 @@ header h1 {
     50% { background-position: 100% 50%; }
 }
 
-/* Buttons */
+/* ===== Unified Liquid Glass surface =====
+   ONE rule gives every glassy component the navigation bar's exact look: same
+   tint, blur, refraction, specular rim, shadow and corner radius. The individual
+   rules below only set layout (size, padding, position) — never the glass.
+
+   IMPORTANT: there is deliberately no `filter` here. A `filter` on the element
+   silently disables the SVG url() refraction in Chromium — which is exactly why
+   the nav (the only component without a filter) was the only one refracting. */
+.top-nav,
+.bubble,
+.button,
+.dropdown-menu,
+.mobile-nav-buttons,
+.mobile-submenu,
+.footer-scroll-bubble,
+.footer-datetime-bubble,
+.gallery-modal,
+.password-modal {
+    /* EXAMPLE ".effect" surface: a faint frost tint, NO border, and a layered
+       inset rim that reads as the lit thickness of real glass (two inner specular
+       glows) over a soft drop shadow that floats the pane.
+
+       The refraction itself is NOT here — glass.js sets each element's
+       `backdrop-filter: url(#lg-...)` inline (Chromium only), which overrides the
+       blur/saturate below. That blur/saturate is therefore the graceful FALLBACK
+       for Safari/Firefox, which can't do SVG backdrop refraction.
+
+       IMPORTANT: never put a CSS `filter` on these surfaces — a `filter` silently
+       disables the url() backdrop refraction in Chromium. */
+    background: hsl(0 0% 100% / var(--lg-frost, 0.05));
+    -webkit-backdrop-filter: blur(2px) saturate(1.3);
+    backdrop-filter: blur(2px) saturate(1.3);
+    border: none;
+    border-radius: var(--lg-radius);
+    box-shadow:
+        inset 0 0 2px 1px rgba(255, 255, 255, 0.22),
+        inset 0 0 10px 4px rgba(255, 255, 255, 0.12),
+        0 4px 16px rgba(10, 12, 40, 0.10),
+        0 8px 24px rgba(10, 12, 40, 0.10),
+        0 16px 56px rgba(10, 12, 40, 0.14),
+        inset 0 4px 16px rgba(255, 255, 255, 0.04),
+        inset 0 8px 24px rgba(255, 255, 255, 0.03);
+}
+
+/* Buttons (glass look comes from the unified surface rule above) */
 .button {
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
     color: white;
     padding: 12px 24px;
     font-size: 1rem;
     margin: 0.5rem 0.25rem;
     cursor: pointer;
-    border-radius: 15px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
     position: relative;
     overflow: hidden;
-    filter: contrast(1.1) brightness(1.05);
 }
 
 .button::before {
@@ -111,11 +219,14 @@ header h1 {
 }
 
 .button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.26);
+    border-color: rgba(255, 255, 255, 0.65);
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    filter: contrast(1.2) brightness(1.1);
+    box-shadow:
+        0 12px 28px rgba(10, 12, 40, 0.30),
+        inset 0 1px 1px rgba(255, 255, 255, 0.85),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.16),
+        0 0 22px rgba(255, 255, 255, 0.18);
 }
 
 .button.active {
@@ -168,12 +279,6 @@ blockquote {
     align-items: center;
     padding: 0.75rem 1rem;
     margin: 0.5rem;
-    background: rgba(255, 255, 255, 0.1);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
 }
 
 .nav-brand {
@@ -282,13 +387,8 @@ blockquote {
     position: absolute;
     top: 100%;
     left: 0;
-    background: rgba(0, 0, 0, 0.7);
-    -webkit-backdrop-filter: blur(30px);
-    backdrop-filter: blur(30px);
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
     padding: 0.5rem 0;
     min-width: 200px;
     opacity: 0;
@@ -296,7 +396,6 @@ blockquote {
     transform: translateY(-10px);
     transition: all 0.3s ease;
     z-index: 1000;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     /* Force hardware acceleration */
     will-change: backdrop-filter;
 }
@@ -311,9 +410,6 @@ blockquote {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
-    /* Force backdrop-filter to render when visible */
-    -webkit-backdrop-filter: blur(30px);
-    backdrop-filter: blur(30px);
     will-change: backdrop-filter;
 }
 
@@ -322,7 +418,8 @@ blockquote {
     width: calc(100% - 1rem);
     padding: 0.5rem 0.75rem;
     background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
     border: 2px solid rgba(255, 255, 255, 0.3);
     color: white;
     text-align: left;
@@ -432,10 +529,6 @@ section > .bubble {
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 2rem;
-    background: none !important;
-    box-shadow: none !important;
-    border: none !important;
-    /* Only .bubble class should control the glass effect */
 }
 
 section > .bubble:last-child {
@@ -665,15 +758,10 @@ hr {
         top: 100%;
         left: 0;
         right: 0;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
         margin: 0.5rem;
         padding: 1rem;
         flex-direction: column;
         gap: 0.5rem;
-        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
         z-index: 1000;
         opacity: 0;
         transform: translateY(-10px);
@@ -689,15 +777,10 @@ hr {
     /* Mobile submenus */
     .mobile-submenu {
         display: none;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 15px;
         margin: 0.5rem 0;
         padding: 0.5rem;
         flex-direction: column;
         gap: 0.25rem;
-        box-shadow: 0 4px 16px rgba(31, 38, 135, 0.37);
         transform: translateY(-10px);
         opacity: 0;
         transition: all 0.3s ease;
@@ -714,7 +797,8 @@ hr {
     
     .submenu-item {
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
         border: 2px solid rgba(255, 255, 255, 0.3);
         color: white;
         padding: 0.5rem 1rem;
@@ -857,41 +941,21 @@ body {
 
 .footer-scroll-bubble {
     flex: 1;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px) saturate(1.2) contrast(1.1);
-    border: 1.5px solid rgba(255, 255, 255, 0.25);
-    border-radius: 8px;
     padding: 0.25rem 0.1rem;
     text-align: center;
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 400;
     overflow: hidden;
-    box-shadow: 
-        0 4px 16px rgba(31, 38, 135, 0.15),
-        0 2px 8px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-    filter: contrast(1.1) brightness(1.05) saturate(1.1);
     position: relative;
     height: 100%;
 }
 
 .footer-datetime-bubble {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px) saturate(1.2) contrast(1.1);
-    border: 1.5px solid rgba(255, 255, 255, 0.25);
-    border-radius: 8px;
     padding: 0.25rem 0.5rem;
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 500;
-    box-shadow: 
-        0 4px 16px rgba(31, 38, 135, 0.15),
-        0 2px 8px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-    filter: contrast(1.1) brightness(1.05) saturate(1.1);
     white-space: nowrap;
     height: 100%;
     display: flex;
@@ -937,22 +1001,11 @@ body {
 }
 
 .bubble {
-    background: rgba(255, 255, 255, 0.13);
-    backdrop-filter: blur(6px) saturate(1.05) contrast(1.04);
-    border-radius: 36px;
-    border: 1.5px solid rgba(255, 255, 255, 0.18);
-    box-shadow:
-        0 4px 32px 0 rgba(31, 38, 135, 0.10),
-        0 1.5px 8px 0 rgba(31, 38, 135, 0.08),
-        0 0 0 2px rgba(255,255,255,0.08),
-        0 0 40px 0 rgba(255,255,255,0.10),
-        /* Inner shadow for glass thickness */
-        inset 0 2px 16px 0 rgba(255,255,255,0.18),
-        inset 0 -8px 32px 0 rgba(31,38,135,0.10);
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* Glass look comes from the unified surface rule; this is layout only */
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        box-shadow 0.3s ease, background-color 0.3s ease;
     position: relative;
     overflow: hidden;
-    filter: contrast(1.06) brightness(1.05) saturate(1.04);
     width: 100%;
     max-width: 1100px;
     margin-left: auto;
@@ -960,58 +1013,19 @@ body {
     margin-bottom: 2rem;
     padding: 2rem;
     text-align: left;
-    outline: 1px solid #fff;
-    outline-offset: -2px;
-}
-
-.bubble::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 36px;
-    background:
-        /* Bottom highlight */
-        radial-gradient(ellipse 80% 40% at 50% 100%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.13) 60%, rgba(255,255,255,0.01) 100%),
-        /* Subtle bottom shadow */
-        radial-gradient(ellipse 90% 20% at 50% 100%, rgba(31,38,135,0.13) 0%, rgba(31,38,135,0.00) 80%);
-    pointer-events: none;
-    z-index: 2;
-}
-
-.bubble::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 36px;
-    background:
-        /* Top highlight */
-        linear-gradient(to bottom, rgba(255,255,255,0.33) 0%, rgba(255,255,255,0.10) 30%, rgba(255,255,255,0.00) 80%),
-        /* Edge glow */
-        radial-gradient(ellipse 100% 100% at 50% 0%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.00) 80%);
-    pointer-events: none;
-    z-index: 2;
 }
 
 .bubble:hover {
-    transform: scale(1.05) translateZ(20px);
+    transform: translateY(-4px) scale(1.012);
     box-shadow:
-        0 15px 40px rgba(31, 38, 135, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.02),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.01),
-        0 0 0 1px rgba(255, 255, 255, 0.08),
-        0 4px 8px rgba(0, 0, 0, 0.08),
-        0 8px 16px rgba(0, 0, 0, 0.05),
-        /* Enhanced bubble curve shadows on hover */
-        0 0 30px rgba(255, 255, 255, 0.15),
-        0 0 60px rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.001);
-    filter: contrast(1.3) brightness(1.2) saturate(1.2);
+        0 22px 60px rgba(10, 12, 40, 0.34),
+        0 4px 12px rgba(10, 12, 40, 0.20),
+        inset 0 1px 1px rgba(255, 255, 255, 0.8),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.16),
+        inset 0 0 30px rgba(255, 255, 255, 0.10),
+        /* Outer bloom that lifts the pane off the background */
+        0 0 40px rgba(255, 255, 255, 0.12);
+    background-color: var(--lg-tint-hover);
 }
 
 .bubble h3 {
@@ -1049,12 +1063,13 @@ section:hover {
     height: 280px;
     min-width: 280px;
     min-height: 280px;
-    background: rgba(255,255,255,0.18);
-    border-radius: 28px;
-    border: 1.5px solid rgba(255,255,255,0.22);
-    outline: 1px solid #fff;
-    outline-offset: -2px;
-    box-shadow: 0 2px 12px 0 rgba(31,38,135,0.10), 0 0 0 1.5px rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.16);
+    border-radius: var(--lg-radius);
+    border: 1px solid var(--lg-stroke);
+    box-shadow:
+        0 8px 24px rgba(10, 12, 40, 0.22),
+        inset 0 1px 1px rgba(255, 255, 255, 0.6),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1163,13 +1178,6 @@ section:hover {
         border-radius: inherit;
         display: block;
     }
-    .bubble {
-        border-radius: 18px;
-    }
-    .bubble::before,
-    .bubble::after {
-        border-radius: 18px;
-    }
 }
 
 /* Gallery Modal Overlay */
@@ -1200,20 +1208,6 @@ section:hover {
 }
 
 .gallery-modal {
-    background: rgba(255, 255, 255, 0.13);
-    backdrop-filter: blur(6px) saturate(1.05) contrast(1.04);
-    border-radius: 36px;
-    border: 1.5px solid rgba(255, 255, 255, 0.18);
-    outline: 1px solid #fff;
-    outline-offset: -2px;
-    box-shadow:
-        0 4px 32px 0 rgba(31, 38, 135, 0.10),
-        0 1.5px 8px 0 rgba(31, 38, 135, 0.08),
-        0 0 0 2px rgba(255,255,255,0.08),
-        0 0 40px 0 rgba(255,255,255,0.10),
-        /* Inner shadow for glass thickness */
-        inset 0 2px 16px 0 rgba(255,255,255,0.18),
-        inset 0 -8px 32px 0 rgba(31,38,135,0.10);
     padding: 2.5rem 2.5rem 2rem 2.5rem;
     display: flex;
     flex-direction: column;
@@ -1224,7 +1218,6 @@ section:hover {
     opacity: 1;
     transform: scale(1);
     transition: opacity 0.35s cubic-bezier(.4,1.4,.6,1), transform 0.35s cubic-bezier(.4,1.4,.6,1);
-    filter: contrast(1.06) brightness(1.05) saturate(1.04);
 }
 .gallery-modal-opening .gallery-modal {
     opacity: 0;
@@ -1528,11 +1521,6 @@ section:hover {
   }
   .bubble {
     padding: 0.5rem 0.1rem;
-    border-radius: 10px;
-  }
-  .bubble::before,
-  .bubble::after {
-    border-radius: 10px;
   }
   /* Disable bubble hover effects on mobile */
   .bubble:hover {
@@ -1604,4 +1592,25 @@ section:hover {
     transform: translateY(-8px) scale(1.04);
     box-shadow: 0 12px 36px 0 rgba(31,38,135,0.22), 0 8px 32px rgba(31, 38, 135, 0.37);
     transition: transform 0.25s cubic-bezier(.4,1.4,.6,1), box-shadow 0.25s;
-} 
+}
+
+/* ===== Liquid Glass refraction =====
+   The per-pane refraction is now applied by glass.js, which builds an SVG
+   displacement map sized to each element and sets `backdrop-filter: url(#lg-...)`
+   inline (Chromium only). There is deliberately no blanket CSS rule here: one
+   shared filter can't be sized to every pane, which is exactly why the old
+   stretched-map approach looked broken. Tune the look via the TUNING object in
+   glass.js (scale = bend strength, border = ring thickness, blur = ring softness).
+   Safari/Firefox fall back to the blur/saturate frost on the unified surface rule. */
+
+/* Respect users who prefer reduced motion: keep the glass, drop the movement.
+   (Cursor-tracked highlights are also disabled from JS under this setting.) */
+@media (prefers-reduced-motion: reduce) {
+    .bubble,
+    .button,
+    .bubble:hover,
+    .button:hover {
+        transition: box-shadow 0.2s ease, background-color 0.2s ease;
+        transform: none !important;
+    }
+}

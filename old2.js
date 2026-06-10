@@ -1,3 +1,11 @@
+/* =====================================================================
+   LIQUID GLASS
+   The glass refraction is now 100% CSS + one static SVG filter (#liquid-glass
+   in index.html), styled after the EXAMPLE "glass button". There is no longer
+   any JS that builds per-pane displacement maps — see index.css (the unified
+   surface rule + the @supports backdrop-filter: url(#liquid-glass) block).
+   ===================================================================== */
+
 // Research Page Custom JavaScript - Interactive Effects
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProjectImages();
     initStickyNav();
     initDateTime();
-    
+
     // Preload all images in the background
     preloadAllImages();
 });
@@ -301,43 +309,46 @@ function initParticleBackground() {
             }
         }
         
-        update() {
-            this.hue += this.hueSpeed;
-            this.noiseOffset += 0.01;
-            
-            // Spawn particles from strand
-            this.particleSpawnTimer++;
-            if (this.particleSpawnTimer > 10) { // Spawn every 10 frames
+        // `step` is the frame delta normalized to a 60fps frame (1.0 == one
+        // 60fps frame) and already scaled by BG_SPEED, so motion is identical
+        // on a 60Hz or 144Hz display and simply slower overall.
+        update(step) {
+            this.hue += this.hueSpeed * step;
+            this.noiseOffset += 0.01 * step;
+
+            // Spawn particles from strand (~every 10 frames at 60fps)
+            this.particleSpawnTimer += step;
+            if (this.particleSpawnTimer > 10) {
                 this.spawnParticles();
                 this.particleSpawnTimer = 0;
             }
-            
+
             // Update particles
             this.particles.forEach((particle, index) => {
-                particle.x += particle.vx;
-                particle.y += particle.vy;
-                particle.life -= 0.02;
-                particle.size *= 0.98;
-                
+                particle.x += particle.vx * step;
+                particle.y += particle.vy * step;
+                particle.life -= 0.02 * step;
+                particle.size *= Math.pow(0.98, step);
+
                 // Remove dead particles
                 if (particle.life <= 0) {
                     this.particles.splice(index, 1);
                 }
             });
-            
+
             // Random flow physics events
             const currentTime = Date.now();
             if (currentTime - this.lastFlowEvent > 20000) { // 20 seconds minimum
-                if (Math.random() < 0.01) { // 1% chance per frame after 20 seconds
+                if (Math.random() < 0.01 * step) { // time-normalized chance
                     this.flowEventIntensity = Math.random() * 3 + 2; // 2-5 intensity
                     this.flowEventDuration = Math.random() * 3000 + 2000; // 2-5 seconds
                     this.lastFlowEvent = currentTime;
                 }
             }
-            
+
             // Apply flow event physics
             if (this.flowEventIntensity > 0) {
-                this.flowEventIntensity -= 0.02; // Decay over time
+                this.flowEventIntensity -= 0.02 * step; // Decay over time
                 if (this.flowEventIntensity <= 0) {
                     this.flowEventIntensity = 0;
                 }
@@ -351,14 +362,14 @@ function initParticleBackground() {
                 if (t > 0.1 && t < 0.9) {
                     const baseMovement = Math.sin(this.noiseOffset + index * 0.5) * 0.2;
                     const flowEventMovement = Math.sin(this.noiseOffset * 2 + index * 0.8) * this.flowEventIntensity * 0.5;
-                    
-                    point.x += baseMovement + flowEventMovement;
-                    
+
+                    point.x += (baseMovement + flowEventMovement) * step;
+
                     // Lock midpoint to horizontal center line
                     if (Math.abs(t - 0.5) < 0.1) { // Midpoint area (40-60% of strand)
                         point.y = canvas.height * 0.5; // Lock to center horizontal line
                     } else {
-                        point.y += this.speed * 0.3 + (this.flowEventIntensity * 0.2); // Enhanced movement during flow events
+                        point.y += (this.speed * 0.3 + (this.flowEventIntensity * 0.2)) * step; // Enhanced movement during flow events
                     }
                 }
                 
@@ -498,10 +509,33 @@ function initParticleBackground() {
         strands.push(new LavaStrand(i + 1));
     }
     
+    // Overall pace of the lava. Lower = slower/calmer. Because motion is
+    // delta-time based, this looks the same regardless of screen refresh rate.
+    const BG_SPEED = 0.35;
+    // Cap the canvas redraw so a 120/144Hz display doesn't burn extra power on a
+    // background that barely moves (delta-time keeps the speed identical anyway).
+    const BG_FPS = 30;
+    const frameMs = 1000 / BG_FPS;
+
+    let lastTime = performance.now();
+    let accumulator = 0;
+
     // Animation loop
-    function animate() {
+    function animate(now) {
+        requestAnimationFrame(animate);
+
+        const elapsed = now - lastTime;
+        lastTime = now;
+        accumulator += elapsed;
+        if (accumulator < frameMs) return; // throttle to BG_FPS
+
+        // Normalize to a 60fps frame and apply the slow-down factor. Clamp so a
+        // backgrounded tab (huge elapsed) doesn't lurch when it refocuses.
+        const step = Math.min(accumulator / (1000 / 60), 6) * BG_SPEED;
+        accumulator = 0;
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // Draw dark background for lava lamp effect
         const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
         bgGradient.addColorStop(0, 'rgba(20, 20, 40, 0.8)');
@@ -509,19 +543,15 @@ function initParticleBackground() {
         bgGradient.addColorStop(1, 'rgba(40, 40, 80, 0.8)');
         ctx.fillStyle = bgGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Draw strands (second strand first so it appears behind)
         strands.slice().reverse().forEach(strand => {
-            strand.update();
+            strand.update(step);
             strand.draw();
         });
-        
-        // No connections needed for single strand
-        
-        requestAnimationFrame(animate);
     }
-    
-    animate();
+
+    requestAnimationFrame(animate);
 }
 
 // Section Interactive Effects

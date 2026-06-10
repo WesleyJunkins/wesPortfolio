@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="weslogo/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="weslogo/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="weslogo/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="weslogo/apple-touch-icon.png" />
+    <link rel="shortcut icon" href="weslogo/favicon.ico" />
+    <link rel="manifest" href="site.webmanifest" />
+
+    <!-- SEO Meta Tags -->
+    <title>Wesley Junkins - Computer Science Researcher | HCI, BCI, XR, Machine Learning</title>
+    <meta name="description" content="Wesley Junkins is a graduate student at The University of Alabama pursuing a master's degree in computer science. Research focuses on Human-Computer Interaction (HCI), Brain-Computer Interfaces (BCIs), Extended Reality (XR), and Machine Learning." />
+    <meta name="keywords" content="Wesley Junkins, Computer Science, Human-Computer Interaction, HCI, Brain-Computer Interface, BCI, Extended Reality, XR, Machine Learning, University of Alabama, Research, Graduate Student" />
+    <meta name="author" content="Wesley Junkins" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Wesley Junkins - Computer Science Researcher" />
+    <meta property="og:description" content="Graduate student at The University of Alabama researching HCI, BCI, XR, and Machine Learning." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://wesleyjunkins.com/" />
+    <meta property="og:image" content="https://wesleyjunkins.com/weslogo/weslogo.png" />
+    <meta property="og:site_name" content="Wesley Junkins Portfolio" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Wesley Junkins - Computer Science Researcher" />
+    <meta name="twitter:description" content="Graduate student at The University of Alabama researching HCI, BCI, XR, and Machine Learning." />
+    <meta name="twitter:image" content="https://wesleyjunkins.com/weslogo/weslogo.png" />
+
+    <!-- Additional SEO -->
+    <link rel="canonical" href="https://wesleyjunkins.com/" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://wesleyjunkins.com/sitemap.xml" />
+
+    <!-- Theme / tiles (dark, to match the new site) -->
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-TileImage" content="weslogo/favicon-32x32.png" />
+    <meta name="theme-color" content="#000000" />
+
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <!-- ===========================================================
+         LAVA — animated gooey "lava-lamp" backdrop on a black field.
+         No lamp vessel/caps/table: just the blobs. Motion is pure CSS
+         keyframes (no GSAP); the #lava-goo SVG filter melds overlapping
+         blobs into metaballs. Sits behind everything (z-index:-1) so the
+         liquid glass has crisp, moving colour to refract.
+         =========================================================== -->
+    <div class="lava" aria-hidden="true">
+      <!-- 4 big blobs in two loose lanes; each orbits an elliptical path
+           (varied spin + phase) so they cross & overlap, the goo necks then tears
+           them apart — the classic lava-lamp morph. -->
+      <span class="lava__blob" style="--x:32%;--y:54%;--s:84vmin;--up:-30vh;--down:32vh;--hx:8vw;--d:480s;--delay:0s"></span>
+      <span class="lava__blob" style="--x:52%;--y:50%;--s:74vmin;--up:-38vh;--down:30vh;--hx:-7vw;--d:420s;--delay:-160s"></span>
+      <span class="lava__blob" style="--x:70%;--y:56%;--s:64vmin;--up:-34vh;--down:36vh;--hx:9vw;--d:448s;--delay:-88s"></span>
+    </div>
+    <!-- Goo filter: blur then alpha-threshold so overlapping blobs merge
+         and pinch off. Bigger blur (28) = softer, blobbier merging; the
+         (20/-9) threshold keeps necks readable while staying blurry. -->
+    <svg class="lava__defs" width="0" height="0" aria-hidden="true">
+      <defs>
+        <filter id="lava-goo">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="36" result="blur" />
+          <feColorMatrix
+            in="blur"
+            mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"
+          />
+        </filter>
+      </defs>
+    </svg>
+
+    <!-- ===========================================================
+         NAV — wide glass pill. Buttons are glass pills; Résumé/Research
+         are dropdowns. Any control with data-section switches the page.
+         =========================================================== -->
+    <nav class="nav">
+      <a class="nav__logo" href="#" data-section="objective">
+        <img class="nav__logo-img" src="weslogo/weslogo.png" alt="Wesley Junkins logo" />
+        <span class="nav__logo-text">Wesley Junkins</span>
+      </a>
+      <div class="nav__buttons">
+        <button class="btn" type="button" data-section="objective">About</button>
+        <button class="btn" type="button" data-section="links">My Links</button>
+
+        <div class="dropdown">
+          <button class="btn dropdown-toggle" type="button">Résumé ▾</button>
+          <div class="dropdown-menu">
+            <button class="dropdown-item" type="button" data-section="education">Education</button>
+            <button class="dropdown-item" type="button" data-section="work">Work Experience</button>
+            <button class="dropdown-item" type="button" data-section="honors">Honors &amp; Awards</button>
+            <button class="dropdown-item" type="button" data-section="societies">Societies</button>
+            <button class="dropdown-item" type="button" data-section="coursework">Coursework</button>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button class="btn dropdown-toggle" type="button">Research ▾</button>
+          <div class="dropdown-menu">
+            <button class="dropdown-item" type="button" data-section="projects">Projects</button>
+            <button class="dropdown-item" type="button" data-section="publications">Publications</button>
+            <button class="dropdown-item" type="button" data-section="service">Service</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hamburger + mobile menu (shown <=720px). A flat list of every
+           section; data-section routes each through the same showSection(). -->
+      <button class="nav__burger" type="button" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav__mobile">
+        <button class="nav__mobile-item" type="button" data-section="objective">About</button>
+        <button class="nav__mobile-item" type="button" data-section="links">My Links</button>
+        <span class="nav__mobile-label">Résumé</span>
+        <button class="nav__mobile-item" type="button" data-section="education">Education</button>
+        <button class="nav__mobile-item" type="button" data-section="work">Work Experience</button>
+        <button class="nav__mobile-item" type="button" data-section="honors">Honors &amp; Awards</button>
+        <button class="nav__mobile-item" type="button" data-section="societies">Societies</button>
+        <button class="nav__mobile-item" type="button" data-section="coursework">Coursework</button>
+        <span class="nav__mobile-label">Research</span>
+        <button class="nav__mobile-item" type="button" data-section="projects">Projects</button>
+        <button class="nav__mobile-item" type="button" data-section="publications">Publications</button>
+        <button class="nav__mobile-item" type="button" data-section="service">Service</button>
+      </div>
+    </nav>
+
+    <main>
+      <!-- ===================== ABOUT ===================== -->
+      <section id="objective">
+        <div class="bubble" data-images='["projectimages/wes.jpg"]'>
+          <h3>About</h3>
+          <p>Wesley Junkins is a graduate student at The University of Alabama, pursuing a master's degree in computer science. He earned his bachelor's degree in computer science with a minor in mathematics from the same institution in 2024. His research interests include Human-Computer Interaction (HCI), Brain-Computer Interfaces (BCI), Health HCI, Neuroadaptive Health HCI, Physiological Computing, Ubiquitous Computing (UbiComp), Ubiquitous Computing for Healthcare (UbiHealth), AI/ML, Human-Centered AI, Spatial Computing, Robotics, and CS Education.</p>
+          <p>As an undergraduate, Wesley conducted research in the Human-Technology Interaction Lab (HTIL) under the mentorship of Dr. Chris Crawford. His work spanned multiple areas of Human-Computer Interaction (HCI), including brain-computer interfaces (BCIs), machine learning, robotics, extended reality (XR), and low-level microcontroller and network communications. Wesley co-authored several research papers and is contributing to ongoing projects in the field. He also assisted in research studies, gained hands-on experience with the IRB process, and collaborated closely with graduate researchers.</p>
+          <p>Wesley has been recognized for his academic excellence and leadership through induction into several prestigious honor societies, including Phi Theta Kappa, Psi Beta, Tau Beta Pi, Tau Sigma, Phi Kappa Phi, and Upsilon Pi Epsilon. He has received numerous awards and honors that underscore his commitment to academic and professional growth.</p>
+          <p>As he pursues his master's and future doctoral studies, Wesley aims to deepen his expertise in Human-Computer Interaction, specifically in the areas of Health HCI, Neuroadaptive Health HCI, and Ubiquitous Computing for Healthcare. His ultimate goal is to become a professional researcher in academia or industry, driven by a passion for leveraging innovative technologies to address complex technical and societal challenges in healthcare and accessibility.</p>
+        </div>
+        <div class="bubble">
+          <h3>Personal Statement</h3>
+          <p>The world of technology was never something that piqued my interest; the concept of how a computer processed 1's and 0's seemed far removed from the career I envisioned for myself as a psychiatrist. Little did I know that these two worlds would interconnect to produce a lifelong passion. Growing up in rural Alabama, I rarely encountered technology and felt more intimidated than inspired when we finally used them in the classroom. In one comical case, we were told to shut down our classroom computers, and I believed that by powering off the monitor, I was shutting down my machine. This humorous incident exemplifies my encounters with technology before I received my own personal computer.</p>
+          <p>One quiet afternoon, my older brother and I unearthed an old Hewlett-Packard Pavilion 7855 from my father's woodshop. As the behemoth machine booted into the Windows Millenium Edition operating system, my thirteen-year-old brain was flooded with questions about the most rudimentary computing paradigms: "How does it paint a window on the screen?" "How does the mouse track movement and adjust the cursor on the screen so quickly?" This curiosity soon shifted from hardware to the logic of software, and I began teaching myself how code could manipulate a machine's behavior. With no computer science courses available at school, I turned to online resources and libraries, immersing myself in operating systems, software, and programming. From that point forward, computer science became the driving force behind my curiosity and ambition.</p>
+          <p>Upon graduating from high school, I enrolled at Shelton State Community College, where I was inducted into the Phi Theta Kappa honor society as a research officer. I led a research project on community college students' mental health, inspired by my interest in psychiatry. This project earned a regional award and introduced me to academic research. Later, in a summer research program at the University of Alabama's Chemical Engineering department, I helped develop environmentally friendly solvents to dissolve plastic waste and presented our findings in Washington, D.C. These experiences ignited my zeal for rigorous academic inquiry and my desire to embark on a lifelong career in academia.</p>
+          <p>After graduating from Shelton State, I was blessed to receive a full-ride scholarship to the University of Alabama to study computer science. Eager to join a research lab, I reached out to several professors but was turned away, as I had not yet narrowed down my interests in computer science. After reflecting on my fascination with psychiatry and the brain, I realized I wanted to connect psychology with computing. Exploring this further, I discovered the field of human-computer interaction (HCI), which aligned perfectly with my passions.</p>
+          <p>Around this time, I discovered a flyer for the Brain Drone Race (BDR) and was astonished that a drone could be controlled by only my thoughts. After joining the BDR development team, I researched the lab that conducted this project: the Human-Technology Interaction Lab (HTIL), where I learned they specialized in HCI and Brain-Computer Interfaces (BCI). Later that semester, Dr. Crawford, who leads the HTIL, mentioned in a keynote address that his lab needed undergraduates with JavaScript skills. Although I had never used JavaScript, I immediately emailed him, expressing both my interest and willingness to learn new skills. To my surprise, I was accepted into the HTIL and assigned programming projects that expanded my skills.</p>
+          <p>Over time, Dr. Crawford guided me to become a more capable scientist. During my time in the lab, I assisted with multiple research projects by developing systems and helping conduct literature reviews. Graduate students mentored me in navigating the research process, from refining literature reviews to writing my first IRB protocol and designing a study. In addition to these experiences, I also had the privilege of attending my first computer science conference, the International Conference on Robotics and Automation (ICRA), in 2025.</p>
+          <p>In the HTIL, I gained hands-on experience with a range of tools and frameworks for extended reality (XR), including Babylon.js, Apple's Create ML, and WebXR. Using these alongside MQTT, ROS, and low-level socket programming, I built XR systems that integrated seamlessly with robotics applications, most notably the extended reality brain drone race.</p>
+          <p>I also developed a drone simulation in Webots using Python's Pytorch library and socket programming, where a neuroevolutionary algorithm adapts flight based on brain and muscle signals while following a circular path. In collaboration with a professor from another university, I helped design an olfactory computing system using a modified mBot and custom Python GUI, later extending it with an XR pond simulation that controlled scent release through a microcontroller. These projects collectively deepened my appreciation for academic research and reinforced my commitment to pursuing this career path.</p>
+          <p>I am eager for the opportunity to continue my research and contribute to the academic community through HCI and BCI research, specifically in applications involving health HCI and human-centered neurotechnology for healthcare. My background in XR systems, machine learning, and interdisciplinary collaborations has prepared me to bring both technical expertise and research capabilities to advancing this field. Pursuing a Ph.D. will not only sharpen my skills as a scientist but also provide the foundation for a career dedicated to academic research and the development of technologies that meaningfully enhance human experiences.</p>
+        </div>
+      </section>
+
+      <!-- ===================== MY LINKS ===================== -->
+      <section id="links">
+        <div class="bubble">
+          <h3>Contact Information</h3>
+          <h4>+1 (205) 463-7800 &nbsp;•&nbsp; wesleyjunkins@gmail.com</h4>
+          <div class="link-buttons">
+            <button class="btn" type="button" onclick="window.open('mailto:wesleyjunkins@gmail.com', '_blank');">Email</button>
+            <button class="btn" type="button" onclick="window.open('https://www.linkedin.com/in/wesley-junkins-3839411b3/', '_blank');">LinkedIn</button>
+            <button class="btn" type="button" onclick="window.open('https://www.facebook.com/profile.php?id=100010633570379', '_blank');">Facebook</button>
+            <button class="btn" type="button" onclick="window.open('https://scholar.google.com/citations?hl=en&user=Oia9tgkAAAAJ', '_blank');">Google Scholar</button>
+            <button class="btn" type="button" onclick="window.open('https://github.com/WesleyJunkins', '_blank');">GitHub</button>
+            <button class="btn" type="button" onclick="window.open('https://orcid.org/my-orcid?orcid=0009-0000-1352-8160', '_blank');">ORCID</button>
+            <button class="btn" type="button" onclick="window.open('https://www.researchgate.net/profile/Wesley-Junkins?ev=hdr_xprf', '_blank');">ResearchGate</button>
+            <button class="btn" type="button" onclick="window.open('https://wesleyjunkins.notion.site/4c3514a79faa4969903f5908aedfeb2f?v=f6384c43b74a42d199417d73ee8ecace&pvs=4', '_blank');">Resumé Documents</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== EDUCATION ===================== -->
+      <section id="education">
+        <h1 class="page-title">Education</h1>
+        <div class="bubble">
+          <h3>Master of Science in Computer Science | The University of Alabama</h3>
+          <h4>January, 2025 - May, 2026 (Expected)</h4>
+          <p>I am currently pursuing my master's degree in computer science. My thesis deals with using reinforcement learning to accurately control a drone in a circular-line following task. This will lead to lap-based drone races using real-time human EEG data to control the drone. I plan to defend my thesis and graduate in Spring 2026.</p>
+        </div>
+        <div class="bubble">
+          <h3>Bachelor of Science in Computer Science | The University of Alabama</h3>
+          <h4>August, 2022 - December, 2024</h4>
+          <p>I recently graduated Summa Cum Laude from the University of Alabama with a bachelor's degree in computer science and a minor in mathematics. During my time at UA, I have kept a 4.0 GPA, and consistently made the President's list. I am a member of the Association for Computing Machinery (ACM) University of Alabama chapter. I also joined Tau Beta Pi, Tau Sigma, Phi Kappa Phi, and Upsilon Pi Epsilon honor societies, and performed the Pledge of the Computing Professional.</p>
+        </div>
+        <div class="bubble">
+          <h3>Associate of Science in General Studies | Shelton State Community College</h3>
+          <h4>August, 2020 - May, 2022</h4>
+          <p>During my time at Shelton, I maintained a 4.0 GPA and was inducted into the Phi Theta Kappa and Psi Beta honor societies. In addition, I received the Thomas E. Umphrey outstanding freshman award, the excellence in calculus 1 award, the Norman C. Cephus special achievement award, the Leo Sumner outstanding sophomore award, and the Macmillan Learning emerging researcher award. I was also a Coca-Cola academic team bronze scholar in Phi Theta Kappa (Top 170 community college students in the U.S.), and All-Alabama academic team scholar in 2022.</p>
+        </div>
+        <div class="bubble">
+          <h3>Dual-Enrollment Transfer Credits | Bevill State Community College</h3>
+          <h4>August, 2018 - May, 2020</h4>
+          <p>I took dual-enrollment credit hours at Bevill State Community College while in high school. I completed 17 hours and maintained a 4.0 GPA.</p>
+        </div>
+        <div class="bubble">
+          <h3>High School Diploma | Gordo High School</h3>
+          <h4>August, 2016 - May, 2020</h4>
+          <p>Graduating with a GPA of above 4.0, I ranked 5th in my graduating class. I was also a member of the Beta Club honor society and the Mu Alpha Theta national honor society for mathematics.</p>
+        </div>
+      </section>
+
+      <!-- ===================== WORK ===================== -->
+      <section id="work">
+        <h1 class="page-title">Work</h1>
+        <div class="bubble">
+          <h3>Graduate Research Assistant | The University of Alabama, Tuscaloosa, AL</h3>
+          <h4>January, 2025 - Present</h4>
+          <p>My responsibilities as a graduate research assistant are similar to those as an undergraduate research assistant, but I also assist with the IRB process and mentor undergraduate research assistants.</p>
+        </div>
+        <div class="bubble">
+          <h3>Undergraduate Research Assistant | The University of Alabama, Tuscaloosa, AL</h3>
+          <h4>May, 2023 - January, 2025</h4>
+          <p>As a research assistant in the Human-Technology Interaction Lab, I contributed to multiple research projects focused on advancing the field of Human-Computer Interaction (HCI). My responsibilities included developing and implementing new projects, collaborating with team members during weekly progress and group meetings, and supporting ongoing research initiatives. Through this role, I gained hands-on experience in experimental design, project development, and interdisciplinary collaboration.</p>
+        </div>
+        <div class="bubble">
+          <h3>IT | Mt. Pleasant Baptist Church, Gordo, AL</h3>
+          <h4>October, 2020 - Present</h4>
+          <p>In my role as IT Director, I oversee the management and maintenance of the church's digital presence, including <a href="https://mpbcgordo.com" target="_blank">the website</a>, Facebook page, and YouTube channel, ensuring content is up-to-date and aligned with organizational goals. I collaborate with staff members to identify and resolve technical issues, providing timely support and implementing solutions to enhance the church's technological capabilities and overall efficiency. I also maintain the church's network infrastructure and diagnose and fix any network issues.</p>
+        </div>
+      </section>
+
+      <!-- ===================== HONORS ===================== -->
+      <section id="honors">
+        <h1 class="page-title">Honors</h1>
+        <div class="bubble">
+          <h3>President's List | Shelton State Community College and The University of Alabama</h3>
+          <h4>December, 2020 - December, 2024</h4>
+          <p>I was named to the President's list each semester at Shelton State and The University of Alabama. The President's list awards students who have maintained a 4.0 GPA.</p>
+        </div>
+        <div class="bubble">
+          <h3>Upsilon Pi Epsilon Outstanding Undergraduate Award | The University of Alabama</h3>
+          <h4>April, 2024</h4>
+          <p>The Upsilon Pi Epsilon Outstanding Undergraduate Award is awarded to undergraduate students who show excellence in academics, research, and community involvement. My mentor, Dr. Chris Crawford presented me this award at the 2024 University of Alabama Computer Science Honors Day program.</p>
+        </div>
+        <div class="bubble">
+          <h3>Accelerated Master's Student | The University of Alabama</h3>
+          <h4>January, 2024</h4>
+          <p>The Accelerated Master's Program (AMP) at The University of Alabama recognizes outstanding students who wish to pursue a graduate degree. This program allowed me to take graduate-level coursework while an undergraduate. 12 of those credit hours could be double-counted as undergraduate credit.</p>
+        </div>
+        <div class="bubble">
+          <h3>Emerging Researcher Award | Psi Beta International Honor Society in Psychology</h3>
+          <h4>July, 2022</h4>
+          <p>I was awarded the MacMillan Emerging Researcher Award during my time in the Psi Beta Psychology honor society.</p>
+          <p><a href="https://psibeta.org/award-winners-2022/" target="_blank">Link to Award Information</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Leo Sumner Outstanding Sophomore Award | Shelton State Community College</h3>
+          <h4>May, 2022</h4>
+          <p>The Outstanding Sophomore Student Award is named for Dr. Leo Sumner, President of Shelton State Community College from 1976-1988. The recipient of the Leo Sumner Outstanding Sophomore Student Award is selected based on outstanding academic performance, school involvement, and community service. It is the highest honor a student can earn at Shelton State Community College.</p>
+        </div>
+        <div class="bubble">
+          <h3>Norman C. Cephus Special Achievement Award | Shelton State Community College</h3>
+          <h4>May, 2022</h4>
+          <p>The Special Achievement Award is named for Mr. Norman C. Cephus, President of Fredd State Technical College from 1982-1990. The recipient of the Norman C. Cephus Special Achievement Award is selected based on academic achievement, involvement in campus and community activities, academic or technical recognition, and job-related activities.</p>
+        </div>
+        <div class="bubble">
+          <h3>Community College Presidential Scholarship | The University of Alabama</h3>
+          <h4>April, 2022</h4>
+          <p>The Community College Presidential Scholarship is one of the top scholarships offered by universities to community college students. This scholarship covers tuition for four semesters.</p>
+          <p><a href="https://scholarships.ua.edu/transfer/in-state/" target="_blank">Link to Award Information</a></p>
+        </div>
+        <div class="bubble">
+          <h3>All-Alabama Academic Team | Phi Theta Kappa International Honor Society</h3>
+          <h4>April, 2022</h4>
+          <p>I was named to the All-Alabama Academic Team. This team recognizes the top community college students in the state of Alabama.</p>
+          <p><a href="https://www.accs.edu/alabama-community-college-system-announces-2022-all-alabama-academic-team/" target="_blank">Link to Award Information</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Coca-Cola Bronze Academic Team | Phi Theta Kappa National Honor Society</h3>
+          <h4>March, 2022</h4>
+          <p>The Coca-Cola Academic Team recognizes high-achieving college students who demonstrate academic excellence and intellectual rigor combined with leadership and service that extends their education beyond the classroom to benefit society. Students named to the team are considered the top 170 community college students in the United States.</p>
+          <p><a href="https://www.ptk.org/scholarships/bachelors-degree/coca-cola-academic-team/" target="_blank">Link to Award Information</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Distinguished Phi Theta Kappa Chapter Officer Award | Phi Theta Kappa International Honor Society</h3>
+          <h4>March, 2022</h4>
+          <p>At the Phi Theta Kappa regional convention, I received a distinguished chapter officer award.</p>
+        </div>
+        <div class="bubble">
+          <h3>Thomas E. Umphrey Outstanding Freshman Award | Shelton State Community College</h3>
+          <h4>May, 2021</h4>
+          <p>The outstanding Freshman Award is named for Dr. Thomas E. Umphrey, President of Shelton State Community College from 1988-2000. The recipient of the Thomas E. Umphrey Outstanding Freshman Award is selected based on outstanding academic achievement and involvement in campus activities.</p>
+          <p><a href="https://www.sheltonstate.edu/shelton-events/graduation-ceremonies-sl/honors-2021/#1589836487089-215abb63-b994" target="_blank">Link to Award Information</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Excellence in Calculus 1 Award | Shelton State Community College</h3>
+          <h4>May, 2021</h4>
+          <p>The Excellence in Calculus award was awarded to me because I achieved an overall grade of 99 in Calculus 1.</p>
+          <p><a href="https://www.sheltonstate.edu/shelton-events/graduation-ceremonies-sl/honors-2021/#1519493414163-b7639e03-0ccc" target="_blank">Link to Award Information</a></p>
+        </div>
+      </section>
+
+      <!-- ===================== SOCIETIES ===================== -->
+      <section id="societies">
+        <h1 class="page-title">Societies</h1>
+        <div class="bubble">
+          <h3>Pledge of the Computing Professional</h3>
+          <h4>December, 2024</h4>
+          <p>The Pledge of the Computing Professional entails a rite-of-passage ceremony for graduates from computing programs. The symbol of The Pledge of the Computer Professional is a matrix with the word "Honor" encoded in ASCII. The background of the matrix is black, the digits are in gold. The purpose of the symbol is to remind the inductee to always honor their profession through their actions.</p>
+          <p><a href="https://pledge-of-the-computing-professional.org/" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Upsilon Pi Epsilon</h3>
+          <h4>April, 2024</h4>
+          <p>Upsilon Pi Epsilon is an honor society for students and professionals in the computing and information technology disciplines. The mission of UPE is to recognize academic excellence at both the undergraduate and graduate levels in the Computing and Information Disciplines.</p>
+          <p><a href="https://upe.acm.org/" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Phi Kappa Phi</h3>
+          <h4>March, 2024</h4>
+          <p>I accepted an invitation to join the Phi Kappa Phi honor society, which is the oldest honor society in the US to target multiple disciplines. The prestigious society's mission is "to recognize and promote academic excellence in all fields of higher education and engage the community of scholars in service to others."</p>
+          <p><a href="https://www.phikappaphi.org/" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Tau Sigma</h3>
+          <h4>June, 2023</h4>
+          <p>Tau Sigma is a national honor society for students who transfer to a four-year institution from a community college.</p>
+          <p><a href="https://www.tausigmanhs.org/" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Tau Beta Pi</h3>
+          <h4>April, 2023</h4>
+          <p>Tau Beta Pi is a national honor society in engineering and the nation's second oldest collegiate honor society.</p>
+          <p><a href="https://www.tbp.org/about.cfm" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>The National Society for Leadership and Success (NSLS)</h3>
+          <h4>December, 2022</h4>
+          <p>The NSLS is an organization for university students that aims to help students develop leadership skills and successful characteristics.</p>
+          <p><a href="https://www.nsls.org/about" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>GearUP Alumni Group</h3>
+          <h4>January, 2022</h4>
+          <p>During high school, my school ran a program, called GearUP Alabama, which helped students from rural areas afford community college. While at Shelton State Community College, I helped to establish a GearUP Alumni group which sought to allow all former GearUP members to congregate. We hosted self-improvement seminars and test-prep sessions for alumni.</p>
+          <p><a href="https://www.gearupal.org/" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Psi Beta</h3>
+          <h4>October, 2021</h4>
+          <p>Psi Beta is a community college national honor society in psychology. In this organization, I worked with the chapter advisor at Shelton State Community College to present some of our research from Phi Theta Kappa at the Troy University Psychology Conference. I was also guided through my first literature review in research.</p>
+          <p><a href="https://psibeta.org/" target="_blank">Link to Organization Website</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Phi Theta Kappa</h3>
+          <h4>February, 2021</h4>
+          <p>Phi Theta Kappa (PTK) is an honor society for two-year institutions. After joining this organization at Shelton State Community College, I was inducted as an officer. Specifically, I was the vice president of Honors in Action. This was a research-centered role (and some of my first exposure to academic research). I was tasked with leading the other officers and chapter members in a research project.</p>
+          <p><a href="https://www.ptk.org/" target="_blank">Link to Organization Website</a></p>
+        </div>
+      </section>
+
+      <!-- ===================== COURSEWORK ===================== -->
+      <section id="coursework">
+        <h1 class="page-title">Coursework</h1>
+        <div class="bubble">
+          <h3>Introduction to Autonomous Robotics</h3>
+          <h4>Fall 2025 | Grade: A</h4>
+          <p>Issues involved with the implementation of robot control software including motion, kinematics, simulation testing, sensor incorporation and unmodeled factors.</p>
+        </div>
+        <div class="bubble">
+          <h3>Artificial Intelligence</h3>
+          <h4>Spring 2025 | Grade: A</h4>
+          <p>The advanced study of topics under the umbrella of artificial intelligence including problem solving, knowledge representation, planning and machine learning.</p>
+        </div>
+        <div class="bubble">
+          <h3>Brain Computer Interfaces</h3>
+          <h4>Spring 2025 | Grade: A</h4>
+          <p>This course involves the exploration of new forms of Human-Computer Interaction (HCI) based on passive measurement of neurophysiological states (cognitive and affective). These include the measurement of cognitive workload and affective engagement.</p>
+        </div>
+        <div class="bubble">
+          <h3>Reinforcement Learning</h3>
+          <h4>Spring 2025 | Grade: A</h4>
+          <p>This course covers fundamental principles, algorithms, and implementations of reinforcement learning, including the design of computational agents based on machine learning and control theory. The typical methods include reinforcement algorithms, dynamic programming, approximate functions, and temporal difference learning for policy evaluation and control problems.</p>
+        </div>
+        <div class="bubble">
+          <h3>Networks</h3>
+          <h4>Fall 2024 | Grade: A</h4>
+          <p>Study of the principles of computer networks, including network architectures, protocols, and network programming. Emphasis on the design and implementation of networked systems.</p>
+        </div>
+        <div class="bubble">
+          <h3>High Performance Computing</h3>
+          <h4>Fall 2024 | Grade: A</h4>
+          <p>Study of the principles of high-performance computing, including parallel and distributed computing, performance evaluation, and high-performance computing applications. Uses tools like MPI, OpenMP, and CUDA.</p>
+        </div>
+        <div class="bubble">
+          <h3>Computer Graphics</h3>
+          <h4>Fall 2024 | Grade: A</h4>
+          <p>Study of the principles of computer graphics, including graphics hardware, graphics software, graphics algorithms, and graphics applications. Used tools like WebGL.</p>
+        </div>
+        <div class="bubble">
+          <h3>Capstone Computing</h3>
+          <h4>Fall 2024 | Grade: A</h4>
+          <p>Capstone course in computer science. Students worked in teams to design, implement, and test a significant software system. Emphasis on the software development process, including requirements analysis, design, implementation, testing, and documentation.</p>
+        </div>
+        <div class="bubble">
+          <h3>Computer Algorithms</h3>
+          <h4>Spring 2024 | Grade: A</h4>
+          <p>This course studies the construction of efficient algorithms for computer implementation. It involves projects aimed at researching efficient algorithms used to solve well-known problems, as well as developing original algorithms to solve those problems.</p>
+        </div>
+        <div class="bubble">
+          <h3>Programming Languages</h3>
+          <h4>Spring 2024 | Grade: A</h4>
+          <p>Formal study of programming language specification, analysis, implementation, and run-time support structures; organization of programming languages with emphasis on language constructs and mechanisms; and study of non-procedural programming paradigms.</p>
+        </div>
+        <div class="bubble">
+          <h3>Network Security</h3>
+          <h4>Spring 2024 | Grade: A</h4>
+          <p>Study of the principles of network security, including cryptography, authentication, access control, secure protocols, and network security applications. Emphasis on the design and implementation of secure networked systems.</p>
+        </div>
+        <div class="bubble">
+          <h3>Emerging Scholars Program (Parts 1 and 2)</h3>
+          <h4>Fall 2023, Spring 2024 | Grade: A</h4>
+          <p>Introduction to research in creative activities in a major research university. The course will provide special opportunities to freshman students admitted to the Emerging Scholars Program.</p>
+        </div>
+        <div class="bubble">
+          <h3>Theory of Probability</h3>
+          <h4>Fall 2023 | Grade: A-</h4>
+          <p>The foundations of the theory of probability, laws governing random phenomena and their practical applications in other fields. Topics include: probability spaces; properties of probability set functions; conditional probability; and an introduction to combinatorics, discrete random variables, expectation of discrete random variables, Chebyshev's Inequality, continuous variables and their distribution functions, and special densities.</p>
+        </div>
+        <div class="bubble">
+          <h3>Linear Algebra</h3>
+          <h4>Fall 2023 | Grade: A+</h4>
+          <p>Fundamentals of linear algebra and matrix theory are covered. Topics include vectors in Euclidean spaces, solving systems of linear equations, matrix algebra, inverses, determinants, eigenvalues, and eigenvectors. Also vector spaces and the basic notions of span, subspace, linear independence, basis, dimension, linear transformation, kernel and range are considered.</p>
+        </div>
+        <div class="bubble">
+          <h3>Operating Systems</h3>
+          <h4>Fall 2023 | Grade: A</h4>
+          <p>Study of basic operating system concepts with an emphasis on memory, processor, device, and information management.</p>
+        </div>
+        <div class="bubble">
+          <h3>Database Management Systems</h3>
+          <h4>Fall 2023 | Grade: A</h4>
+          <p>Constituent parts of database management (design, creation, and manipulation of databases), including the conceptual and relational data models, SQL, normalization and security. Writing proficiency is required for a passing grade in this course.</p>
+        </div>
+        <div class="bubble">
+          <h3>Calculus III</h3>
+          <h4>Summer 2023 | Grade: A (Unweighted)</h4>
+          <p>Topics include vector functions, functions of two or more variables, partial derivatives (including applications), quadric surfaces, multiple integration, and vector calculus (including Green's Theorem, curl and divergence, surface integrals, and Stokes' Theorem).</p>
+        </div>
+        <div class="bubble">
+          <h3>Software Design and Engineering</h3>
+          <h4>Spring 2023 | Grade: A</h4>
+          <p>Introduction to software engineering: the software crisis, program life cycle, software systems analysis techniques, software modeling, theory and practice of design, program testing methodologies, programmer team organization, and program verification and synthesis.</p>
+        </div>
+        <div class="bubble">
+          <h3>Data Structures and Algorithms</h3>
+          <h4>Spring 2023 | Grade: 96.1, A</h4>
+          <p>Data structures including balanced search trees, heaps, hash tables, and graphs. Algorithm design techniques including divide-and-conquer, greedy method, and dynamic programming. Emphasis on problem solving, design, analysis, and reasoning about data structures and algorithms.</p>
+        </div>
+        <div class="bubble">
+          <h3>Microcomputers</h3>
+          <h4>Spring 2023 | Grade: A</h4>
+          <p>Microprocessors, microcontrollers, assembly-language programming, interrupts, polling and hardware interfaces.</p>
+        </div>
+        <div class="bubble">
+          <h3>Discrete Mathematics</h3>
+          <h4>Fall 2022 | Grade: A+</h4>
+          <p>An introduction to mathematical logic and proof within the context of discrete structures. Topics include basic mathematical logic, elementary number theory, basic set theory, functions, and relations.</p>
+        </div>
+        <div class="bubble">
+          <h3>Calculus II</h3>
+          <h4>Spring 2022 | Grade: 106, A</h4>
+          <p>Topics include applications of integration, techniques of integration, infinite series, polar coordinates and parametric equations, lines and planes in space, and vectors in the plane and in space.</p>
+        </div>
+        <div class="bubble">
+          <h3>Principles of Microeconomics</h3>
+          <h4>Fall 2021 | Grade: A (Unweighted)</h4>
+          <p>This course is an introduction of the microeconomic theory, analysis, and applications. Topics include scarcity, the theories of consumer behavior, production and cost, various market structures, output and resource pricing, and other aspects of microeconomics.</p>
+        </div>
+        <div class="bubble">
+          <h3>Fundamentals of Oral Communication (Public Speaking)</h3>
+          <h4>Fall 2021 | Grade: A (Unweighted)</h4>
+          <p>This is a performance course that includes the principles of human communication: intrapersonal, interpersonal, group, and public. The course surveys current communication theory and provides practical application for workforce readiness.</p>
+        </div>
+        <div class="bubble">
+          <h3>Calculus I</h3>
+          <h4>Spring 2021 | Grade: 99, A</h4>
+          <p>Topics include the limit of a function; the derivative of algebraic, trigonometric, exponential, and logarithmic functions; and the definite integral and its basic applications to area problems. Applications of the derivative are covered in detail, including approximations of error using differentials, maximum and minimum problems, and curve sketching using calculus.</p>
+        </div>
+      </section>
+
+      <!-- ===================== PROJECTS ===================== -->
+      <section id="projects">
+        <h1 class="page-title">Projects</h1>
+        <div class="bubble" data-images='["projectimages/BDR20232024_project/IMG_5665.png", "projectimages/BDR20232024_project/IMG_5641.png", "projectimages/BDR20232024_project/IMG_5640.png", "projectimages/BDR20232024_project/IMG_6330.png", "projectimages/BDR20232024_project/IMG_6334.png", "projectimages/BDR20232024_project/IMG_6329.png"]'>
+          <h3>Brain Drone Race</h3>
+          <p>The Brain Drone Race (BDR) is a novel human-computer interaction (HCI) application that leverages brain activity to control a drone. The BDR is a multi-party application that allows multiple users to compete against each other in a race. The users wear an EEG headset and use their brain activity to control the drone. In the past, we have used users' emotions, focus, and motor imagery to control the drone. When the EEG signals are captured and preprocessed, we use a machine learning classifier to convert the signals to drone instructions.</p>
+        </div>
+        <div class="bubble">
+          <h3>hciXR</h3>
+          <p>hciXR is a proposed JavaScript library that allows developers to create extended reality (XR) and 3D applications with human-computer interaction (HCI) features. It is in the planning phase currently and will soon transition to ongoing development. The library will be open-source and will be available on npm. The goal of the project is to remove the complicated process of designing 3D interfaces and BCI (Brain-Computer Interface) and MCI (Muscle-Computer Interface) functionality from the developer's workflow so they can focus on the application logic.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/NEDrones2025_project/1.png", "projectimages/NEDrones2025_project/2.png"]'>
+          <h3>Neuroevolutionary Algorithms and Computer Vision for Circular Lap-Based Physiological Drone Racing</h3>
+          <p>Robots, including drones, have been able to follow lines in flight for a long time. However, following a circular path is a more challenging task. In this project, we are using neuroevolution and computer vision to train a drone to follow a circular path. We are using a drone with a camera and a neuroevolutionary algorithm-trained agent to learn to follow a circular path. The goal of this project is to explore the use of neuroevolutionary algorithms and computer vision to train a drone to follow a circular path in the hope of transitioning the brain drone race to a lap-based race.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/Olfactory2025_project/1.png", "projectimages/Olfactory2025_project/2.png"]'>
+          <h3>Olfactory Human-Computer Interaction</h3>
+          <p>This project explores the use of olfactory senses in human-computer interaction. We built a system that allows the user to view an extended reality environment containing a Koi Fish pond. The user can lean towards or away from the pond. Behind the scenes, distance measurements control the amount of scent the user receives. The aim of this study is to measure physiological responses to smell when trying to complete a task (e.g. counting the Koi Fish).</p>
+        </div>
+        <div class="bubble">
+          <h3>Quadruped Robotics and Extended Reality in Search and Rescue Tasks</h3>
+          <p>In this project, we aim to develop a complex system of communication between a quadruped robot and an extended reality device. The goal of this project is to assist in search and rescue operations where the user may not be able to traverse environment that a quadruped can. The interaction should ideally be seamless and require low cognitive workload.</p>
+        </div>
+        <div class="bubble">
+          <h3>Quadruped Robotics vs. Wheeled Mobile Robotics in K-12 STEM Education</h3>
+          <p>This project presents a user study comparing the use of a quadruped robot and a wheeled mobile robot in a K-12 STEM classroom. The goal of this project is to measure self-efficacy, collaboration, and engagement from students studying the same curriculum, but with different robots (quadruped vs. wheeled).</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/BDRXR2026_project/1.png", "projectimages/BDRXR2026_project/2.png", "projectimages/BDRXR2026_project/3.png"]'>
+          <h3>Extended Reality Brain Drone Racing</h3>
+          <p>The Brain-Drone Race (BDR) is a novel human-computer interaction (HCI) application that uses a participants' EEG signals to control a real drone. This project aims to recreate the experience inside an extended reality environment. The goal of this project is to explore the differences in user engagement and performance using the two systems.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/physiolab_project/pl1.png", "projectimages/physiolab_project/pl2.png"]'>
+          <h3>PhysioLab</h3>
+          <p>PhysioLab is a proposed application that facilitates the development of physiological applications. The program will include built-in data collection programs for multiple physiological devices. It also introduces the Physiological Scripting Language (PSL), which helps developers with streaming data in, filtering it, and streaming it out to other programs, such as machine learning applications or physiological games.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/AVPTracking2024_project/1.png", "projectimages/AVPTracking2024_project/2.png", "projectimages/AVPTracking2024_project/3.png"]'>
+          <h3>Machine Learning Object Detection and Manipulation in Extended Reality</h3>
+          <p>This project explores the use of an Apple Vision Pro to detect specific objects in real-time and outline them. The program uses machine learning to learn the dimensions of any object. Then, in the extended reality scene, if the object is detected, a grid outline of the object will appear and follow the object during translations and rotations.</p>
+        </div>
+        <div class="bubble">
+          <h3>Smart Controller App</h3>
+          <p>For my computer science capstone project, my team and I developed a mobile app that allows the user to control the operations of a home-heating stove remotely. The app was developed using Flutter and was available on both iOS and Android. The app connected to a Raspberry Pi over the internet via MQTT. I built a program on the Raspberry Pi that converted MQTT messages to bluetooth messages and sent them to the stove's controller. Additionally, the Pi connected to a Firebase database, which was capable of storing data from the stove over time.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/ERN2022_project/IMG_1430.JPG", "projectimages/ERN2022_project/IMG_1464.JPG", "projectimages/ERN2022_project/IMG_2170.JPG", "projectimages/ERN2022_project/IMG_2169.JPG", "projectimages/ERN2022_project/IMG_2172.JPG", "projectimages/ERN2022_project/IMG_1211.JPG", "projectimages/ERN2022_project/IMG_1239.JPG", "projectimages/ERN2022_project/IMG_1216.JPG", "projectimages/ERN2022_project/IMG_1422 00002.png", "projectimages/ERN2022_project/IMG_1422 00004.png", "projectimages/ERN2022_project/ERN23-950.jpg", "projectimages/ERN2022_project/ERN23-949.jpg"]'>
+          <h3>Synthesizing Green Solvents to Dissolve Plastic Waste</h3>
+          <p>In the summer of 2022, I worked with a team of researchers from The University of Alabama's department of chemical and biological engineering in a Research Experience for Undergraduates (REU) project. In this project, I assisted a graduate student in reading research papers and developing his solvents. At the conclusion of this REU project, I developed a poster of our findings and presented it at the 2023 Emerging Researchers National (ERN) conference in Washington D.C.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/SSCCHIA_project/IMG_9275.JPG", "projectimages/SSCCHIA_project/IMG_9278.JPG"]'>
+          <h3>The Effect of Community College Students' Mental Health on Future Generations</h3>
+          <p>As the vice president of honors in action of our chapter of Phi Theta Kappa, I was tasked with leading the other officers and members in a research project. This project explored the effect of community college students' mental health on future generations. We conducted a literature review and surveyed students from surrounding community colleges. Our findings led us to develop a comprehensive refresh of Shelton State Community College's community resource index, and we hosted a mental health fair on campus.</p>
+        </div>
+      </section>
+
+      <!-- ===================== PUBLICATIONS ===================== -->
+      <section id="publications">
+        <h1 class="page-title">Publications</h1>
+        <div class="bubble">
+          <h3>"It Wasn't As Bad As I Thought": Exploring K-12 Students' Experiences with Real-Time and Pre-Recorded Physiological Data</h3>
+          <h4>Status: Accepted</h4>
+          <p>Physiological sensing technologies are becoming increasingly accessible, prompting educators and researchers to explore hands-on approaches for introducing K–12 students to physiological computing. This paper presents findings from a study in which students engaged in two sets of activities: one using a consumer-grade hardware physiological sensor (i.e., OpenBCI Ganglion) and the other using pre-recorded physiological data. Our observations revealed similar outcomes and student engagement across both approaches. Notably, students reported increases in self-efficacy and confidence regardless of whether they worked with real-time or pre-recorded data.</p>
+          <p><a href="papers/SIGCSE2025.pdf" target="_blank">Read Paper</a></p>
+        </div>
+        <div class="bubble">
+          <h3>PhysioBots: Engaging K-12 Students with Physiological Computing and Robotics</h3>
+          <h4>April, 2025</h4>
+          <p>To address the limited empirical work evaluating ways to expose K-12 students to physiological computing, we present PhysioBots, an educational tool designed to introduce K-12 students to physiological computing and robotics. We evaluated PhysioBots with 27 high school students to compare physiological (e.g., self-induced changes in brain or muscle activity) and conventional control (e.g., keyboard) of a robot during a STEM education activity. Our preliminary results suggest that PhysioBots may improve students' self-efficacy and programming confidence.</p>
+          <p><a href="papers/3706599.3720106.pdf" target="_blank">Read Paper</a></p>
+        </div>
+        <div class="bubble">
+          <h3>PhysioML: A Web-Based Tool for Machine Learning Education with Real-Time Physiological Data</h3>
+          <h4>February, 2025</h4>
+          <p>This paper presents findings from a study exploring students' experiences learning basic machine learning concepts while using physiological sensors to control an interactive game. Activities featuring physiological sensors produced similar outcomes when compared to exercises that leveraged image data. While students' machine learning self-efficacy increased in both conditions, students seemed more curious about machine learning after working with the physiological sensor.</p>
+          <p><a href="papers/3641554.3701815.pdf" target="_blank">Read Paper</a></p>
+        </div>
+        <div class="bubble">
+          <h3>Towards a Brain-Computer Interface Framework for Multi-Party Robot Applications</h3>
+          <h4>April, 2024</h4>
+          <p>Studies featuring electroencephalography (EEG)-based robotic systems controlled by the brain have predominantly concentrated on single-user applications. This research contributes an EEG-Based multi-party closed-loop architecture built using the Neurosity™ SDK. Furthermore, this work extends knowledge regarding how to use consumer-grade EEG tools to implement a multi-party BCI application.</p>
+          <p><a href="papers/3603287.3656157.pdf" target="_blank">Read Paper</a></p>
+        </div>
+      </section>
+
+      <!-- ===================== SERVICE ===================== -->
+      <section id="service">
+        <h1 class="page-title">Service</h1>
+        <div class="bubble">
+          <h3>SIGCSE Paper Reviewer</h3>
+          <h4>July, 2025</h4>
+          <p>During SIGCSE TS (Special Interest Group in Computer Science Education, Technical Symposium) 2025, I volunteered to peer review 6 papers.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/RET2025_project/IMG_6452.jpeg", "projectimages/RET2025_project/IMG_6458.jpeg", "projectimages/RET2025_project/IMG_2982.JPG", "projectimages/RET2025_project/IMG_2995.JPG", "projectimages/RET2025_project/IMG_3018.JPG", "projectimages/RET2025_project/IMG_3059.JPG", "projectimages/RET2025_project/IMG_3092.JPG", "projectimages/RET2025_project/IMG_3153.JPG", "projectimages/RET2025_project/IMG_6440.JPG", "projectimages/RET2025_project/IMG_6442.JPG", "projectimages/RET2025_project/1751033482980.jpeg", "projectimages/RET2025_project/1751033483426.jpeg"]'>
+          <h3>RET Sensors Workshop</h3>
+          <h4>June - July, 2025</h4>
+          <p>During the summer of 2025, I taught a 7-week workshop in sensing. This workshop brought middle- and high-school teachers from the surrounding counties to the University. The workshop taught them about sensors and microprocessors. They received hands-on experience in programming and designing sensor-driven IoT systems. They were able to bring much of what they learned back to their schools to enhance the STEM curriculum.</p>
+        </div>
+        <div class="bubble" data-images='["projectimages/icra2025_service/icra1.jpeg"]'>
+          <h3>ICRA K-12 Workshop</h3>
+          <h4>May, 2025</h4>
+          <p>At the 2025 International Conference in Robotics and Automation (ICRA), I helped with a K-12 workshop. This workshop, operated by Thinquebytes, invited middle- and high-school students from the Atlanta area to the conference to experience cutting edge research in robotics. They were also lead through two collaborative projects designed to garner their interest in STEM.</p>
+          <p>
+            <a href="https://www.thinquebytes.com/home" target="_blank">Link to Thinquebytes' Website</a><br />
+            <a href="https://2025.ieee-icra.org/" target="_blank">Link to ICRA 2025 Website</a>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="index.js" defer></script>
+  </body>
+</html>

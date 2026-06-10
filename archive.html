@@ -22,11 +22,38 @@
     <meta name="msapplication-TileImage" content="weslogo/favicon-32x32.png" />
     <meta name="theme-color" content="#2a3f98" />
 
-    <link rel="stylesheet" href="./index.css" type="text/css" />
+    <link rel="stylesheet" href="./old2.css" type="text/css" />
     <link rel="stylesheet" href="./archive.css" type="text/css" />
 </head>
 
 <body>
+    <!-- Liquid Glass refraction filter (see index.html for details) -->
+    <svg class="lg-svg" width="0" height="0" aria-hidden="true" focusable="false"
+        style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none">
+        <defs>
+            <filter id="liquid-glass" x="0%" y="0%" width="100%" height="100%"
+                color-interpolation-filters="sRGB">
+                <!-- Organic refraction pattern -->
+                <feTurbulence type="fractalNoise" baseFrequency="0.008 0.009" numOctaves="2" seed="7"
+                    result="noise" />
+                <feGaussianBlur in="noise" stdDeviation="1.5" result="softNoise" />
+                <!-- Force the noise opaque so its R/G channels drive the displacement cleanly -->
+                <feColorMatrix in="softNoise" type="matrix"
+                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0 1" result="opaqueNoise" />
+                <!-- Center-weighted intensity mask: white (full) in the middle, black (none) at the
+                     edges, so refraction starts minimal at the rim and ramps up toward the centre -->
+                <feImage preserveAspectRatio="none" x="0%" y="0%" width="100%" height="100%"
+                    result="weight"
+                    href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmFkaWFsR3JhZGllbnQgaWQ9ImciIGN4PSI1MCUiIGN5PSI1MCUiIHI9IjUwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZiIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzAwMCIvPjwvcmFkaWFsR3JhZGllbnQ+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9InVybCgjZykiLz48L3N2Zz4=" />
+                <!-- modulated = 0.5 + (noise - 0.5) * weight  → no bending at the rim, full in the centre -->
+                <feComposite in="opaqueNoise" in2="weight" operator="arithmetic" k1="1" k2="0"
+                    k3="-0.5" k4="0.5" result="modulated" />
+                <feDisplacementMap in="SourceGraphic" in2="modulated" scale="42" xChannelSelector="R"
+                    yChannelSelector="G" />
+            </filter>
+        </defs>
+    </svg>
+
     <canvas id="bg"></canvas>
 
     <!-- Top Navigation Bar -->
@@ -246,7 +273,7 @@
     </main>
 
     <div id="app"></div>
-    <script src="index.js"></script>
+    <script src="old2.js"></script>
     <script src="archive.js"></script>
 </body>
 
