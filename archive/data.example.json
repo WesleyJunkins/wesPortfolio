@@ -1,0 +1,23 @@
+{
+  "folders": [
+    {
+      "name": "March 1993 (The Beginning, Larry and Traci Wedding Rehearsal)",
+      "items": [
+        { "name": "Part 1", "url": "https://www.youtube.com/watch?v=REPLACE_WITH_UNLISTED_LINK", "type": "video" },
+        { "name": "Part 2", "url": "https://www.youtube.com/watch?v=REPLACE_WITH_UNLISTED_LINK", "type": "video" }
+      ]
+    },
+    {
+      "name": "Beach Vacation 2010",
+      "items": [
+        { "name": "Part 1", "url": "https://www.youtube.com/watch?v=REPLACE_WITH_UNLISTED_LINK", "type": "video" }
+      ]
+    },
+    {
+      "name": "Family Photos",
+      "items": [
+        { "name": "Photo 1", "url": "https://example.com/photo1.jpg", "type": "image" }
+      ]
+    }
+  ]
+}
