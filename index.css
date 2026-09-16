@@ -460,6 +460,18 @@ section.is-active .bubble {
   transform: translateY(0);
 }
 
+/* Browsers without the url() refraction (Safari / Firefox — index.js only adds
+   .lg-refract on <html> in Chromium): the shared 5%-white tint + 2px frost is
+   near-invisible on a floating menu over the lava, so the item text was
+   unreadable. Give the menu a real frosted pane instead: dark tint + heavy
+   blur (same family as the solid mobile panel). Beats the shared surface rule
+   below on specificity. */
+html:not(.lg-refract) .dropdown-menu {
+  background: rgba(16, 18, 28, 0.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+
 .dropdown-item {
   appearance: none;
   border: none;
@@ -684,6 +696,11 @@ section.is-active .bubble {
   background: transparent;
   cursor: pointer;
   pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .nav__burger span {
   display: block;
@@ -713,8 +730,12 @@ section.is-active .bubble {
   top: calc(100% + 10px);
   right: 0;
   width: min(260px, calc(100vw - 24px));
+  /* dvh where supported: iOS Safari's 100vh includes the retracted toolbar,
+     which let the panel's bottom hide behind it. vh line stays as fallback. */
   max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
   overflow-y: auto;
+  overscroll-behavior: contain; /* scrolling the menu never scrolls the page */
   display: none;
   flex-direction: column;
   gap: 0.1rem;
@@ -737,14 +758,16 @@ section.is-active .bubble {
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
   text-align: left;
-  padding: 0.65rem 0.85rem;
+  padding: 0.75rem 0.85rem; /* ~44px row = comfortable touch target */
   border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
-.nav__mobile-item:hover {
+.nav__mobile-item:hover,
+.nav__mobile-item:active { /* :active = touch feedback (no hover on phones) */
   background: rgba(255, 255, 255, 0.08);
 }
 .nav__mobile-item.is-active {
@@ -755,7 +778,12 @@ section.is-active .bubble {
 @media (max-width: 720px) {
   .nav__buttons { display: none; }
   .nav__burger { display: flex; }
-  .nav.is-open .nav__mobile { display: flex; }
+  /* Same entrance as the desktop dropdown (fade + 6px drop). display toggles
+     can't transition, so it's a keyframe run each time the panel opens. */
+  .nav.is-open .nav__mobile {
+    display: flex;
+    animation: menuIn 0.2s ease;
+  }
 
   /* Mobile brand: just the (bigger) circular logo, no name. 40px balances the
      42px hamburger and fills the pill with a little breathing room. */
@@ -794,6 +822,13 @@ section.is-active .bubble {
   .dropdown-menu {
     -webkit-backdrop-filter: blur(14px) saturate(1.4) !important;
     backdrop-filter: blur(14px) saturate(1.4) !important;
+  }
+
+  /* A floating menu needs more than blur over the dark field: the same dark
+     tint as the non-Chromium fallback, so items stay legible on touch
+     Chromium too (where .lg-refract keeps the rule above from applying). */
+  .dropdown-menu {
+    background: rgba(16, 18, 28, 0.6);
   }
 
   /* Lava: drop the heavy goo filter and soften the blobs with a transparent-

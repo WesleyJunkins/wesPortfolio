@@ -70,6 +70,11 @@ const SUPPORTED = !!(IS_CHROMIUM && window.CSS && CSS.supports && (
   CSS.supports("-webkit-backdrop-filter", "url(#l)")
 ));
 
+/* Flag the document when the url() refraction engine is active, so the CSS
+   can give browsers WITHOUT it (Safari/Firefox) a heavier frosted fallback
+   where the faint 2px frost isn't enough (e.g. the dropdown menus). */
+if (SUPPORTED) document.documentElement.classList.add("lg-refract");
+
 let glassCount = 0;
 const svgEl = (name, attrs) => {
   const n = document.createElementNS(SVGNS, name);
