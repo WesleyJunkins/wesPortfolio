@@ -57,8 +57,15 @@ const CHANNEL_MATRIX = {
   b: "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0",
 };
 
-/* Chromium feature gate (glass.js 77-81). */
-const SUPPORTED = !!(window.CSS && CSS.supports && (
+/* Chromium feature gate. CSS.supports alone is NOT enough: Safari parses
+   `backdrop-filter: url()` and answers true, but can't render SVG-referenced
+   backdrop filters — on a cold load it paints the raw displacement maps as
+   stretched magenta shapes over the nav/buttons/docks. Require a Chromium
+   signal too (navigator.userAgentData is Chromium-only but HTTPS-only, so
+   window.chrome covers plain-HTTP previews; Safari and Firefox expose
+   neither), so non-Chromium always gets the CSS frost fallback. */
+const IS_CHROMIUM = !!(navigator.userAgentData || window.chrome);
+const SUPPORTED = !!(IS_CHROMIUM && window.CSS && CSS.supports && (
   CSS.supports("backdrop-filter", "url(#l)") ||
   CSS.supports("-webkit-backdrop-filter", "url(#l)")
 ));

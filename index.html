@@ -52,17 +52,12 @@
          blobs into metaballs. Sits behind everything (z-index:-1) so the
          liquid glass has crisp, moving colour to refract.
          =========================================================== -->
-    <div class="lava" aria-hidden="true">
-      <!-- 4 big blobs in two loose lanes; each orbits an elliptical path
-           (varied spin + phase) so they cross & overlap, the goo necks then tears
-           them apart — the classic lava-lamp morph. -->
-      <span class="lava__blob" style="--x:32%;--y:54%;--s:84vmin;--up:-30vh;--down:32vh;--hx:8vw;--d:480s;--delay:0s"></span>
-      <span class="lava__blob" style="--x:52%;--y:50%;--s:74vmin;--up:-38vh;--down:30vh;--hx:-7vw;--d:420s;--delay:-160s"></span>
-      <span class="lava__blob" style="--x:70%;--y:56%;--s:64vmin;--up:-34vh;--down:36vh;--hx:9vw;--d:448s;--delay:-88s"></span>
-    </div>
     <!-- Goo filter: blur then alpha-threshold so overlapping blobs merge
          and pinch off. Bigger blur (28) = softer, blobbier merging; the
-         (20/-9) threshold keeps necks readable while staying blurry. -->
+         (20/-9) threshold keeps necks readable while staying blurry.
+         MUST come BEFORE the .lava div that references it: Safari paints
+         incrementally and won't reliably re-resolve a filter url() it
+         couldn't find on first paint (sharp unmerged blobs on cold load). -->
     <svg class="lava__defs" width="0" height="0" aria-hidden="true">
       <defs>
         <filter id="lava-goo">
@@ -75,6 +70,14 @@
         </filter>
       </defs>
     </svg>
+    <div class="lava" aria-hidden="true">
+      <!-- 4 big blobs in two loose lanes; each orbits an elliptical path
+           (varied spin + phase) so they cross & overlap, the goo necks then tears
+           them apart — the classic lava-lamp morph. -->
+      <span class="lava__blob" style="--x:32%;--y:54%;--s:84vmin;--up:-30vh;--down:32vh;--hx:8vw;--d:480s;--delay:0s"></span>
+      <span class="lava__blob" style="--x:52%;--y:50%;--s:74vmin;--up:-38vh;--down:30vh;--hx:-7vw;--d:420s;--delay:-160s"></span>
+      <span class="lava__blob" style="--x:70%;--y:56%;--s:64vmin;--up:-34vh;--down:36vh;--hx:9vw;--d:448s;--delay:-88s"></span>
+    </div>
 
     <!-- ===========================================================
          NAV — wide glass pill. Buttons are glass pills; Résumé/Research
