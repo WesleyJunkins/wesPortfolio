@@ -803,6 +803,155 @@ html:not(.lg-refract) .dropdown-menu {
   .nav__mobile { width: calc(100vw - 24px); }
 }
 
+/* =========================================================
+   ACCESSIBILITY
+   1. Baseline (both modes): visible keyboard focus, skip link, and the
+      always-present accessibility toggle button.
+   2. html.a11y — "accessibility mode", toggled by the button and persisted
+      in localStorage: strips the liquid glass / lava / motion for a static,
+      high-contrast (WCAG AA) presentation of the same content.
+   ========================================================= */
+
+/* Keyboard focus must be visible in BOTH modes (mouse clicks are unaffected —
+   :focus-visible only matches keyboard/programmatic focus). */
+:focus-visible {
+  outline: 3px solid #9ecbff;
+  outline-offset: 2px;
+}
+html.a11y :focus-visible {
+  outline: 3px solid #ffd54a;
+}
+
+/* Skip link: first tab stop; visually hidden until focused. */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 20000;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #000000;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+/* The accessibility toggle: always visible, fixed bottom-right, solid (never
+   glassified) so it stays legible over anything. */
+.a11y-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 12000;
+  padding: 0.7rem 1.05rem;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  background: rgba(8, 10, 18, 0.92);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  -webkit-tap-highlight-color: transparent;
+}
+.a11y-toggle:hover {
+  background: rgba(30, 34, 52, 0.95);
+}
+/* Pressed = accessibility mode ON: inverted so the state is obvious. */
+.a11y-toggle[aria-pressed="true"] {
+  background: #ffd54a;
+  border-color: #ffd54a;
+  color: #000000;
+}
+
+/* ---- html.a11y: the accessible presentation ---- */
+
+/* No motion anywhere (beats the inline riseIn animation JS sets, and stops
+   the colour cycling). */
+html.a11y *,
+html.a11y *::before,
+html.a11y *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* No lava backdrop; plain near-black page. */
+html.a11y .lava,
+html.a11y .lava__defs {
+  display: none;
+}
+html.a11y body {
+  background: #05070d;
+}
+
+/* All glass surfaces become solid, bordered panels: kill the url() refraction
+   (inline style, hence !important), the frost, and the glow shadows. */
+html.a11y .nav,
+html.a11y .btn,
+html.a11y .bubble,
+html.a11y .dropdown-menu {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: #141824;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: none;
+}
+
+/* High-contrast text; drop the halo text-shadows (no busy backdrop now). */
+html.a11y .bubble h3,
+html.a11y .bubble h4,
+html.a11y .bubble p {
+  text-shadow: none;
+}
+html.a11y .bubble p {
+  color: #eef1f7;
+}
+html.a11y .bubble h4 {
+  color: rgba(255, 255, 255, 0.78);
+}
+html.a11y .page-title {
+  color: #d6dbe6;
+}
+html.a11y .nav__mobile-label {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Links: underlined (colour alone can't signal a link) and light enough. */
+html.a11y .bubble a {
+  color: #a7cbff;
+  text-decoration: underline;
+}
+
+/* Buttons: state shown by background + underline instead of colour glows. */
+html.a11y .btn:hover,
+html.a11y .dropdown-item:hover,
+html.a11y .nav__mobile-item:hover,
+html.a11y .nav__mobile-item:active {
+  background: #2a3040;
+  box-shadow: none;
+}
+html.a11y .btn.is-current,
+html.a11y .dropdown-item.is-active,
+html.a11y .nav__mobile-item.is-active {
+  background: #2e3a55;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+/* Solid panels for the menus (mobile panel is already solid). */
+html.a11y .nav__mobile {
+  background: #141824;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: none;
+}
+
 /* ---- Lava simplification for touch devices (and very narrow viewports) ----
    The full-screen #lava-goo SVG filter is an animated gaussian blur over the
    whole viewport every frame — the heaviest GPU cost, and it bogs phones down.

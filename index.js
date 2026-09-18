@@ -483,9 +483,13 @@ function showSection(name) {
     window.scrollTo(0, 0); // start each page at the top
   }
 
-  document.querySelectorAll("[data-section]").forEach((el) =>
-    el.classList.toggle("is-active", el.dataset.section === name)
-  );
+  document.querySelectorAll("[data-section]").forEach((el) => {
+    const on = el.dataset.section === name;
+    el.classList.toggle("is-active", on);
+    // Expose the active page to assistive tech, not just visually.
+    if (on) el.setAttribute("aria-current", "page");
+    else el.removeAttribute("aria-current");
+  });
 
   // Selected-page GLOW always lands on a TOP-LEVEL nav button: About / My Links
   // map directly; a dropdown sub-page (e.g. Education) lights its Résumé /
@@ -505,6 +509,7 @@ function showSection(name) {
   document.querySelectorAll(".dropdown.is-open").forEach((d) =>
     d.classList.remove("is-open")
   );
+  syncDropdownAria();
 
   // Close the mobile menu after navigating.
   const navEl = document.querySelector(".nav");
@@ -524,7 +529,19 @@ function initNav() {
   );
 }
 
-/* Résumé / Research dropdowns: toggle on click, close others + on outside click. */
+/* Keep each toggle's aria-expanded in step with its dropdown's is-open state,
+   wherever the state is changed from. */
+function syncDropdownAria() {
+  document.querySelectorAll(".dropdown-toggle").forEach((t) =>
+    t.setAttribute(
+      "aria-expanded",
+      String(t.closest(".dropdown").classList.contains("is-open"))
+    )
+  );
+}
+
+/* Résumé / Research dropdowns: toggle on click, close others + on outside
+   click or Escape (Escape also closes the mobile menu). */
 function initDropdowns() {
   document.querySelectorAll(".dropdown-toggle").forEach((toggle) => {
     toggle.addEventListener("click", (e) => {
@@ -535,13 +552,27 @@ function initDropdowns() {
         d.classList.remove("is-open")
       );
       dd.classList.toggle("is-open", !wasOpen);
+      syncDropdownAria();
     });
   });
-  document.addEventListener("click", () =>
+  document.addEventListener("click", () => {
     document.querySelectorAll(".dropdown.is-open").forEach((d) =>
       d.classList.remove("is-open")
-    )
-  );
+    );
+    syncDropdownAria();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".dropdown.is-open").forEach((d) =>
+      d.classList.remove("is-open")
+    );
+    syncDropdownAria();
+    const nav = document.querySelector(".nav.is-open");
+    if (nav) {
+      nav.classList.remove("is-open");
+      nav.querySelector(".nav__burger")?.setAttribute("aria-expanded", "false");
+    }
+  });
 }
 
 /* =========================================================
@@ -714,9 +745,41 @@ function initMobileNav() {
   });
 }
 
+/* =========================================================
+   ACCESSIBILITY MODE
+   html.a11y (set pre-paint by the inline <head> script when saved, toggled
+   live by the #a11y-toggle button) swaps the liquid-glass presentation for
+   a static, high-contrast one — see the ACCESSIBILITY section of index.css.
+   While it's on we also skip building the (expensive) refraction engine;
+   it's built on demand the first time the mode is switched off.
+   ========================================================= */
+const a11yOn = () => document.documentElement.classList.contains("a11y");
+
+let glassified = false;
+function ensureGlass() {
+  if (glassified || !SUPPORTED) return;
+  glassified = true;
+  glassifySurfaces();
+}
+
+function initA11y() {
+  const btn = document.getElementById("a11y-toggle");
+  if (!btn) return;
+  btn.setAttribute("aria-pressed", String(a11yOn()));
+  btn.addEventListener("click", () => {
+    const on = document.documentElement.classList.toggle("a11y");
+    try {
+      localStorage.setItem("a11y-mode", on ? "1" : "0");
+    } catch (e) {}
+    if (!on) ensureGlass(); // returning to the full design needs the engine
+    btn.setAttribute("aria-pressed", String(on));
+  });
+}
+
 randomizeLava();
 renderProjectImages();
-glassifySurfaces();
+initA11y();
+if (!a11yOn()) ensureGlass();
 initNav();
 initDropdowns();
 initMobileNav();
