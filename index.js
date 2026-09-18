@@ -344,8 +344,9 @@ class LiquidGlass {
     if (key !== this._sizeKey) {
       this._sizeKey = key;
       const uri = buildMapDataUri(w, h, r, this.config.band ?? TUNING.band, this.config.axis);
+      // href only: the engine is Chromium-gated, and every Chromium with
+      // backdrop-filter:url() reads href — no need to store each map twice.
       this.feImage.setAttribute("href", uri);
-      this.feImage.setAttribute("xlink:href", uri); // legacy
 
       // `intensity` (default 1) scales the displacement down. Thin wide bars
       // (nav/footer) over-reach past their own height and grab the content
@@ -462,6 +463,11 @@ function glassifySurfaces() {
   );
   document.querySelectorAll(".dropdown-menu").forEach((el) =>
     LiquidGlass.apply(el)
+  );
+  // The accessibility orb: full-axis refraction, like a tiny bubble. (In
+  // accessibility mode glassify is skipped and the CSS shows it solid.)
+  document.querySelectorAll(".a11y-toggle").forEach((el) =>
+    LiquidGlass.apply(el, { radius: "pill", intensity: 0.3 })
   );
 }
 
@@ -607,6 +613,7 @@ function renderProjectImages() {
     img.src = images[0];
     img.alt = "Project image";
     img.loading = "lazy";
+    img.decoding = "async"; // decode off the main thread — no scroll jank
     figure.appendChild(img);
 
     if (images.length > 1) {
@@ -629,16 +636,23 @@ function renderProjectImages() {
   });
 }
 
-/* Fullscreen image carousel. Built on demand, removed on close. Closes on the
-   ✕, click-outside, or Esc; ← / → step through when there's more than one. */
+/* Fullscreen image carousel, styled as site chrome: the control pill and the
+   close button are glass (refraction via LiquidGlass on Chromium — skipped in
+   accessibility mode, where the CSS shows solid panels), the image sits in a
+   dock-like rimmed frame. Built on demand, removed on close. Closes on the ✕,
+   click-outside, or Esc; ← / → and swiping step through when there's more
+   than one. */
 function createGalleryModal(images, startIndex = 0) {
   document.querySelector(".gallery-modal-overlay")?.remove();
   let i = startIndex;
   const multi = images.length > 1;
+  const opener = document.activeElement; // to hand focus back on close
 
   const overlay = document.createElement("div");
   overlay.className = "gallery-modal-overlay";
-  overlay.tabIndex = 0;
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", "Image gallery");
 
   const modal = document.createElement("div");
   modal.className = "gallery-modal";
@@ -646,11 +660,15 @@ function createGalleryModal(images, startIndex = 0) {
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "gallery-modal-close";
-  closeBtn.setAttribute("aria-label", "Close");
+  closeBtn.setAttribute("aria-label", "Close gallery");
   closeBtn.innerHTML = "&times;";
 
+  const figure = document.createElement("div");
+  figure.className = "gallery-modal-figure";
   const img = document.createElement("img");
   img.className = "gallery-modal-image";
+  img.decoding = "async";
+  figure.appendChild(img);
 
   const nav = document.createElement("div");
   nav.className = "gallery-modal-nav";
@@ -674,10 +692,29 @@ function createGalleryModal(images, startIndex = 0) {
     img.src = images[i];
     img.alt = `Image ${i + 1} of ${images.length}`;
     counter.textContent = `${i + 1} / ${images.length}`;
+    if (multi) {
+      // Warm the neighbours so stepping feels instant.
+      new Image().src = images[(i + 1) % images.length];
+      new Image().src = images[(i - 1 + images.length) % images.length];
+    }
   }
+
+  // Glassify the gallery chrome like the site chrome (no-op off Chromium;
+  // skipped in accessibility mode). Destroyed with the modal.
+  const glasses = [];
+  if (!document.documentElement.classList.contains("a11y")) {
+    glasses.push(
+      LiquidGlass.apply(nav, { radius: "pill", intensity: 0.3, axis: "x" }),
+      LiquidGlass.apply(closeBtn, { radius: "pill", intensity: 0.3, axis: "x" })
+    );
+  }
+
   function close() {
     document.removeEventListener("keydown", onKey);
+    glasses.forEach((g) => g.destroy());
+    document.body.style.overflow = ""; // release the scroll lock
     overlay.remove();
+    if (opener && opener.focus) opener.focus();
   }
   function onKey(e) {
     if (e.key === "Escape") close();
@@ -693,11 +730,30 @@ function createGalleryModal(images, startIndex = 0) {
   });
   document.addEventListener("keydown", onKey);
 
+  // Swipe left/right steps through on touch screens.
+  let touchX = null;
+  overlay.addEventListener(
+    "touchstart",
+    (e) => { touchX = e.touches[0].clientX; },
+    { passive: true }
+  );
+  overlay.addEventListener(
+    "touchend",
+    (e) => {
+      if (touchX == null || !multi) return;
+      const dx = e.changedTouches[0].clientX - touchX;
+      touchX = null;
+      if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1));
+    },
+    { passive: true }
+  );
+
   show(i);
-  modal.append(closeBtn, img, nav);
-  overlay.appendChild(modal);
+  modal.append(figure, nav);
+  overlay.append(modal, closeBtn);
   document.body.appendChild(overlay);
-  overlay.focus();
+  document.body.style.overflow = "hidden"; // lock page scroll behind the modal
+  closeBtn.focus();
 }
 window.createGalleryModal = createGalleryModal;
 

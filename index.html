@@ -61,8 +61,14 @@
       id="a11y-toggle"
       type="button"
       aria-pressed="false"
+      aria-label="Accessibility mode"
+      title="Accessibility mode"
     >
-      <span aria-hidden="true">♿</span> Accessibility mode
+      <!-- Accessibility glyph (Material "accessibility"): icon-only button,
+           its accessible name comes from the aria-label above. -->
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+        <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"/>
+      </svg>
     </button>
 
     <!-- ===========================================================
@@ -73,15 +79,19 @@
          liquid glass has crisp, moving colour to refract.
          =========================================================== -->
     <!-- Goo filter: blur then alpha-threshold so overlapping blobs merge
-         and pinch off. Bigger blur (28) = softer, blobbier merging; the
-         (20/-9) threshold keeps necks readable while staying blurry.
+         and pinch off. The (18/-8) threshold keeps necks readable while
+         staying blurry. PERF: the filter is applied to .lava__field, which
+         renders at HALF resolution and is upscaled 2x by the compositor —
+         so stdDeviation 18 here shows as the original 36, and the per-frame
+         blur (the page's dominant GPU cost) does ~4x less work. The upscale
+         is invisible on an already-soft blur field.
          MUST come BEFORE the .lava div that references it: Safari paints
          incrementally and won't reliably re-resolve a filter url() it
          couldn't find on first paint (sharp unmerged blobs on cold load). -->
     <svg class="lava__defs" width="0" height="0" aria-hidden="true">
       <defs>
         <filter id="lava-goo">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="36" result="blur" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
           <feColorMatrix
             in="blur"
             mode="matrix"
@@ -91,12 +101,16 @@
       </defs>
     </svg>
     <div class="lava" aria-hidden="true">
-      <!-- 4 big blobs in two loose lanes; each orbits an elliptical path
-           (varied spin + phase) so they cross & overlap, the goo necks then tears
-           them apart — the classic lava-lamp morph. -->
-      <span class="lava__blob" style="--x:32%;--y:54%;--s:84vmin;--up:-30vh;--down:32vh;--hx:8vw;--d:480s;--delay:0s"></span>
-      <span class="lava__blob" style="--x:52%;--y:50%;--s:74vmin;--up:-38vh;--down:30vh;--hx:-7vw;--d:420s;--delay:-160s"></span>
-      <span class="lava__blob" style="--x:70%;--y:56%;--s:64vmin;--up:-34vh;--down:36vh;--hx:9vw;--d:448s;--delay:-88s"></span>
+      <!-- .lava__field is the half-resolution canvas (see index.css): all
+           blob geometry is divided by --inv (2) and scaled back up. -->
+      <div class="lava__field">
+        <!-- 4 big blobs in two loose lanes; each orbits an elliptical path
+             (varied spin + phase) so they cross & overlap, the goo necks then tears
+             them apart — the classic lava-lamp morph. -->
+        <span class="lava__blob" style="--x:32%;--y:54%;--s:84vmin;--up:-30vh;--down:32vh;--hx:8vw;--d:480s;--delay:0s"></span>
+        <span class="lava__blob" style="--x:52%;--y:50%;--s:74vmin;--up:-38vh;--down:30vh;--hx:-7vw;--d:420s;--delay:-160s"></span>
+        <span class="lava__blob" style="--x:70%;--y:56%;--s:64vmin;--up:-34vh;--down:36vh;--hx:9vw;--d:448s;--delay:-88s"></span>
+      </div>
     </div>
 
     <!-- ===========================================================
@@ -105,7 +119,10 @@
          =========================================================== -->
     <nav class="nav">
       <a class="nav__logo" href="#" data-section="objective">
-        <img class="nav__logo-img" src="weslogo/weslogo.png" alt="Wesley Junkins logo" />
+        <!-- weslogo-nav.png = 120px render of weslogo.png: the full 1572px
+             logo was decoded (~10MB of RAM) to draw a 30-40px image. The
+             original stays for og:image / galleries. -->
+        <img class="nav__logo-img" src="weslogo/weslogo-nav.png" alt="Wesley Junkins logo" decoding="async" />
         <span class="nav__logo-text">Wesley Junkins</span>
       </a>
       <div class="nav__buttons">
@@ -539,7 +556,7 @@
       <!-- ===================== PROJECTS ===================== -->
       <section id="projects">
         <h1 class="page-title">Projects</h1>
-        <div class="bubble" data-images='["projectimages/BDR20232024_project/IMG_5665.png", "projectimages/BDR20232024_project/IMG_5641.png", "projectimages/BDR20232024_project/IMG_5640.png", "projectimages/BDR20232024_project/IMG_6330.png", "projectimages/BDR20232024_project/IMG_6334.png", "projectimages/BDR20232024_project/IMG_6329.png"]'>
+        <div class="bubble" data-images='["projectimages/BDR20232024_project/IMG_5665.jpg", "projectimages/BDR20232024_project/IMG_5641.jpg", "projectimages/BDR20232024_project/IMG_5640.jpg", "projectimages/BDR20232024_project/IMG_6330.jpg", "projectimages/BDR20232024_project/IMG_6334.jpg", "projectimages/BDR20232024_project/IMG_6329.jpg"]'>
           <h3>Brain Drone Race</h3>
           <p>The Brain Drone Race (BDR) is a novel human-computer interaction (HCI) application that leverages brain activity to control a drone. The BDR is a multi-party application that allows multiple users to compete against each other in a race. The users wear an EEG headset and use their brain activity to control the drone. In the past, we have used users' emotions, focus, and motor imagery to control the drone. When the EEG signals are captured and preprocessed, we use a machine learning classifier to convert the signals to drone instructions.</p>
         </div>
@@ -579,7 +596,7 @@
           <h3>Smart Controller App</h3>
           <p>For my computer science capstone project, my team and I developed a mobile app that allows the user to control the operations of a home-heating stove remotely. The app was developed using Flutter and was available on both iOS and Android. The app connected to a Raspberry Pi over the internet via MQTT. I built a program on the Raspberry Pi that converted MQTT messages to bluetooth messages and sent them to the stove's controller. Additionally, the Pi connected to a Firebase database, which was capable of storing data from the stove over time.</p>
         </div>
-        <div class="bubble" data-images='["projectimages/ERN2022_project/IMG_1430.JPG", "projectimages/ERN2022_project/IMG_1464.JPG", "projectimages/ERN2022_project/IMG_2170.JPG", "projectimages/ERN2022_project/IMG_2169.JPG", "projectimages/ERN2022_project/IMG_2172.JPG", "projectimages/ERN2022_project/IMG_1211.JPG", "projectimages/ERN2022_project/IMG_1239.JPG", "projectimages/ERN2022_project/IMG_1216.JPG", "projectimages/ERN2022_project/IMG_1422 00002.png", "projectimages/ERN2022_project/IMG_1422 00004.png", "projectimages/ERN2022_project/ERN23-950.jpg", "projectimages/ERN2022_project/ERN23-949.jpg"]'>
+        <div class="bubble" data-images='["projectimages/ERN2022_project/IMG_1430.JPG", "projectimages/ERN2022_project/IMG_1464.JPG", "projectimages/ERN2022_project/IMG_2170.JPG", "projectimages/ERN2022_project/IMG_2169.JPG", "projectimages/ERN2022_project/IMG_2172.JPG", "projectimages/ERN2022_project/IMG_1211.JPG", "projectimages/ERN2022_project/IMG_1239.JPG", "projectimages/ERN2022_project/IMG_1216.JPG", "projectimages/ERN2022_project/IMG_1422-00002.jpg", "projectimages/ERN2022_project/IMG_1422-00004.jpg", "projectimages/ERN2022_project/ERN23-950.jpg", "projectimages/ERN2022_project/ERN23-949.jpg"]'>
           <h3>Synthesizing Green Solvents to Dissolve Plastic Waste</h3>
           <p>In the summer of 2022, I worked with a team of researchers from The University of Alabama's department of chemical and biological engineering in a Research Experience for Undergraduates (REU) project. In this project, I assisted a graduate student in reading research papers and developing his solvents. At the conclusion of this REU project, I developed a poster of our findings and presented it at the 2023 Emerging Researchers National (ERN) conference in Washington D.C.</p>
         </div>

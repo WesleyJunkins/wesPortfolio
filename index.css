@@ -64,10 +64,29 @@ body {
   z-index: -1;
   pointer-events: none;
   overflow: hidden;
-  /* NO background here. The goo filter shapes the ALPHA channel, so the
-     container must be transparent — only the blobs carry alpha, letting
-     their blurred edges threshold into metaballs that neck & tear. The
-     black field comes from body { background:#000 } sitting behind this. */
+}
+
+/* PERF: the goo lives on this HALF-resolution inner field, upscaled 2x by a
+   compositor transform — the per-frame full-screen blur (the page's dominant
+   GPU cost) does ~4x less work for a visually identical soft field. All blob
+   geometry (sizes + drift reach, both viewport-relative units) is divided by
+   --inv so the scale(2) lands it back at the designed values. overflow:hidden
+   HERE (i.e. before the filter, like the old .lava) keeps the "smush": blobs
+   pushed past the edge are clipped flat first, then the goo softens the cap.
+   NO background here. The goo filter shapes the ALPHA channel, so the
+   container must be transparent — only the blobs carry alpha, letting
+   their blurred edges threshold into metaballs that neck & tear. The
+   black field comes from body { background:#000 } sitting behind this. */
+.lava__field {
+  --inv: 2;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  height: 50%;
+  transform: scale(2);
+  transform-origin: 0 0;
+  overflow: hidden;
   filter: url(#lava-goo);
 }
 
@@ -89,8 +108,11 @@ body {
   position: absolute;
   left: var(--x);
   top: var(--y);
-  width: var(--s);
-  height: var(--s);
+  /* --s is a viewport unit (vmin): divide by the field's --inv so the 2x
+     upscale restores the designed size. %-based --x/--y need no correction
+     (they track the field, which the scale maps back onto the viewport). */
+  width: calc(var(--s) / var(--inv, 1));
+  height: calc(var(--s) / var(--inv, 1));
   border-radius: 50%;
   /* Colour is driven by lava-color (below) through the typed --c1/--c2 vars,
      so every blob fades through the same hue together, smoothly. */
@@ -113,20 +135,24 @@ body {
    overflow clips a flat cap against the edge); --hx = horizontal bulge whose
    SIGN sets the spin direction; scale() flattens the blob at the caps. */
 @keyframes lava-drift {
+  /* vh/vw reaches are divided by --inv (1 outside a scaled field) so the
+     half-resolution field's 2x upscale restores the designed travel. */
   0%,
   100% {
-    transform: translate(-50%, calc(-50% + var(--down, 32vh)))
+    transform: translate(-50%, calc(-50% + var(--down, 32vh) / var(--inv, 1)))
       scale(1.28, 0.66);
   }
   25% {
-    transform: translate(calc(-50% + var(--hx, 8vw)), -50%) scale(1);
+    transform: translate(calc(-50% + var(--hx, 8vw) / var(--inv, 1)), -50%)
+      scale(1);
   }
   50% {
-    transform: translate(-50%, calc(-50% + var(--up, -32vh)))
+    transform: translate(-50%, calc(-50% + var(--up, -32vh) / var(--inv, 1)))
       scale(1.28, 0.66);
   }
   75% {
-    transform: translate(calc(-50% - var(--hx, 8vw)), -50%) scale(1);
+    transform: translate(calc(-50% - var(--hx, 8vw) / var(--inv, 1)), -50%)
+      scale(1);
   }
 }
 
@@ -278,8 +304,10 @@ section.is-active { display: block; }
 
 .project-image-container {
   flex: 0 0 auto;
+  /* ALWAYS a square: width may change per layout (see the <=720px rule),
+     the aspect-ratio keeps the height locked to it. */
   width: 240px;
-  height: 240px;
+  aspect-ratio: 1 / 1;
   position: relative;
   overflow: hidden;
   border-radius: 20px;
@@ -327,21 +355,31 @@ section.is-active { display: block; }
     flex-direction: column;
     align-items: stretch;
   }
+  /* Stacked layout: still a SQUARE (aspect-ratio above), centered, scaling
+     down with the bubble on narrow screens instead of going letterbox. */
   .project-image-container {
-    width: 100%;
-    height: 220px;
+    width: min(100%, 300px);
+    margin: 0 auto;
   }
 }
 
-/* ---- Fullscreen gallery carousel (built on demand in index.js) ---- */
+/* ---- Fullscreen gallery carousel (built on demand in index.js) ----
+   Styled as site chrome: the control bar and close button are the same glass
+   pills as the nav (they're in the shared surface rule below and glassified
+   by LiquidGlass.apply on Chromium); the image sits in a dock-like rounded
+   frame with the specular rim. The overlay stays a PLAIN dark tint — no
+   backdrop-filter here, or the glass controls would nest their
+   backdrop-filter inside it and lose the url() refraction. */
 .gallery-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 13000; /* above the a11y toggle (12000) so it can't overlap the controls */
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 7, 14, 0.86);
+  padding: 16px;
+  background: rgba(4, 5, 10, 0.88);
+  overscroll-behavior: contain;
   animation: galleryFade 0.28s ease;
 }
 @keyframes galleryFade {
@@ -350,37 +388,60 @@ section.is-active { display: block; }
 }
 .gallery-modal {
   position: relative;
-  max-width: 96vw;
-  max-height: 94vh;
+  max-width: min(96vw, 1280px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 1.1rem;
   animation: galleryPop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes galleryPop {
   from { opacity: 0; transform: scale(0.94); }
   to { opacity: 1; transform: scale(1); }
 }
-.gallery-modal-image {
-  max-width: 90vw;
-  max-height: 78vh;
-  object-fit: contain;
-  border-radius: 16px;
-  background: #111;
+
+/* The image's dock frame: bubble-family corner radius + the specular rim as
+   an ::after overlay (an inset box-shadow on the <img> itself would hide
+   behind the replaced image content). */
+.gallery-modal-figure {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
 }
+.gallery-modal-figure::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 10px 3px rgba(255, 255, 255, 0.10);
+}
+.gallery-modal-image {
+  display: block;
+  max-width: min(92vw, 1200px);
+  max-height: 74vh;
+  max-height: 74dvh; /* iOS: don't hide behind the retracted toolbar */
+  object-fit: contain;
+  background: #0a0c14;
+}
+
+/* Control pill: ◀ counter ▶ in one glass pill, sized/padded like the nav. */
 .gallery-modal-nav {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
 }
 .gallery-modal-counter {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  min-width: 4ch;
+  font-size: 0.95rem;
+  min-width: 5ch;
   text-align: center;
 }
 .gallery-modal-btn,
@@ -388,38 +449,54 @@ section.is-active { display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.12);
+  border: none;
   color: #fff;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 999px;
   line-height: 1;
   padding: 0;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
+/* Arrows live INSIDE the glass pill: transparent until hovered, then the
+   same lava glow as the nav buttons. (Outside .nav this is the palette's
+   base hue — same as the dock link buttons.) */
 .gallery-modal-btn {
-  width: 48px;
-  height: 48px;
-  font-size: 1.2rem;
+  width: 44px;
+  height: 44px;
+  font-size: 1.05rem;
+  background: transparent;
 }
+.gallery-modal-btn:hover {
+  background: var(--lg-tint-hover);
+  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--lava-now) 60%, transparent);
+}
+/* Close: round glass button pinned to the overlay's top-right, clear of the
+   image at every size. Its background/frost comes from the shared surface
+   rule below. */
 .gallery-modal-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 40px;
-  height: 40px;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
   font-size: 1.5rem;
-  z-index: 1;
 }
-.gallery-modal-btn:hover,
 .gallery-modal-close:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.06);
+  background: var(--lg-tint-hover);
+  box-shadow:
+    var(--lg-shadow),
+    0 0 14px 3px color-mix(in srgb, var(--lava-now) 60%, transparent);
 }
 
 @media (max-width: 720px) {
-  .gallery-modal-image { max-height: 62vh; }
-  .gallery-modal-btn { width: 42px; height: 42px; }
+  .gallery-modal { gap: 0.85rem; }
+  .gallery-modal-figure { border-radius: 18px; }
+  .gallery-modal-image {
+    max-width: calc(100vw - 32px);
+    max-height: 64vh;
+    max-height: 64dvh; /* leave room for the control pill + close button */
+  }
 }
 
 /* Staggered rise-in when a section is shown. NO `filter` here — a filter on a
@@ -566,13 +643,31 @@ html:not(.lg-refract) .dropdown-menu {
 .nav,
 .btn,
 .bubble,
-.dropdown-menu {
+.dropdown-menu,
+.gallery-modal-nav,
+.gallery-modal-close {
   color: rgba(255, 255, 255, 0.92);
   border: none;
   background: hsl(0 0% 100% / var(--lg-frost, 0.05));
   -webkit-backdrop-filter: blur(2px) saturate(1.3);
   backdrop-filter: blur(2px) saturate(1.3);
   box-shadow: var(--lg-shadow);
+}
+
+/* No url() refraction engine (Safari / Firefox — index.js only adds
+   .lg-refract on <html> in Chromium): the faint 2px frost above is only meant
+   as Chromium's pre-engine/off-screen filler, so give these browsers the same
+   proper frosted glass the touch devices use, on every surface. On Chromium
+   the inline url() refraction still overrides this per element. */
+html:not(.lg-refract) .nav,
+html:not(.lg-refract) .btn,
+html:not(.lg-refract) .bubble,
+html:not(.lg-refract) .dropdown-menu,
+html:not(.lg-refract) .gallery-modal-nav,
+html:not(.lg-refract) .gallery-modal-close,
+html:not(.lg-refract) .a11y-toggle {
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
 }
 
 /* Content docks: displacement refraction (set inline by index.js). The blur below
@@ -840,32 +935,62 @@ html.a11y :focus-visible {
   top: 12px;
 }
 
-/* The accessibility toggle: always visible, fixed bottom-right, solid (never
-   glassified) so it stays legible over anything. */
+/* The accessibility toggle: a circular GLASS ORB icon button, matching the
+   site chrome — frost tint + specular rim here, url() refraction attached by
+   glassifySurfaces() on Chromium (full-axis, like a tiny bubble). Named for
+   AT by its aria-label. border:none like every glass surface, so the
+   engine's measured map stays aligned. */
 .a11y-toggle {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 12000;
-  padding: 0.7rem 1.05rem;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  border-radius: 999px;
-  background: rgba(8, 10, 18, 0.92);
-  color: #ffffff;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1;
-  white-space: nowrap;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: hsl(0 0% 100% / var(--lg-frost, 0.05));
+  -webkit-backdrop-filter: blur(2px) saturate(1.3);
+  backdrop-filter: blur(2px) saturate(1.3);
+  box-shadow: var(--lg-shadow);
+  color: #ffffff; /* the SVG glyph inherits this via currentColor */
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.25s ease, background 0.25s ease;
   -webkit-tap-highlight-color: transparent;
 }
-.a11y-toggle:hover {
-  background: rgba(30, 34, 52, 0.95);
+/* Legibility over bright lava: shadow on the GLYPH (a filter on the button
+   itself would disable its url() backdrop refraction in Chromium). */
+.a11y-toggle svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
-/* Pressed = accessibility mode ON: inverted so the state is obvious. */
+/* Hover: the same lava glow as the other pills (base hue outside .nav). */
+.a11y-toggle:hover {
+  background: var(--lg-tint-hover);
+  box-shadow:
+    var(--lg-shadow),
+    0 0 14px 3px color-mix(in srgb, var(--lava-now) 60%, transparent);
+}
+/* Pressed = accessibility mode ON: inverted so the state is obvious. The
+   html.a11y variants below out-rank the a11y solid override. */
 .a11y-toggle[aria-pressed="true"] {
+  background: #ffd54a;
+  color: #000000;
+}
+html.a11y .a11y-toggle {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: #141824;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: none;
+}
+html.a11y .a11y-toggle svg {
+  filter: none;
+}
+html.a11y .a11y-toggle[aria-pressed="true"] {
   background: #ffd54a;
   border-color: #ffd54a;
   color: #000000;
@@ -896,11 +1021,26 @@ html.a11y body {
 html.a11y .nav,
 html.a11y .btn,
 html.a11y .bubble,
-html.a11y .dropdown-menu {
+html.a11y .dropdown-menu,
+html.a11y .gallery-modal-nav,
+html.a11y .gallery-modal-close {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   background: #141824;
   border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: none;
+}
+/* Gallery in a11y mode: flat frame, no glows, solid hover feedback. */
+html.a11y .gallery-modal-figure::after {
+  box-shadow: none;
+}
+html.a11y .gallery-modal-btn {
+  background: transparent;
+  border: none;
+}
+html.a11y .gallery-modal-btn:hover,
+html.a11y .gallery-modal-close:hover {
+  background: #2a3040;
   box-shadow: none;
 }
 
@@ -968,7 +1108,10 @@ html.a11y .nav__mobile {
   .nav,
   .btn,
   .bubble,
-  .dropdown-menu {
+  .dropdown-menu,
+  .gallery-modal-nav,
+  .gallery-modal-close,
+  .a11y-toggle {
     -webkit-backdrop-filter: blur(14px) saturate(1.4) !important;
     backdrop-filter: blur(14px) saturate(1.4) !important;
   }
@@ -983,7 +1126,7 @@ html.a11y .nav__mobile {
   /* Lava: drop the heavy goo filter and soften the blobs with a transparent-
      edged gradient. Speed the drift + colour cycle up — without the goo morphing
      the slow desktop pace (~480s) read as static here. */
-  .lava {
+  .lava__field {
     filter: none;
   }
   .lava__blob {
