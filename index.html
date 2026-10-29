@@ -128,6 +128,7 @@
       <div class="nav__buttons">
         <button class="btn" type="button" data-section="objective">About</button>
         <button class="btn" type="button" data-section="links">My Links</button>
+        <button class="btn" type="button" data-section="downloads">Downloads</button>
 
         <div class="dropdown">
           <button class="btn dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">Résumé ▾</button>
@@ -158,6 +159,7 @@
       <div class="nav__mobile">
         <button class="nav__mobile-item" type="button" data-section="objective">About</button>
         <button class="nav__mobile-item" type="button" data-section="links">My Links</button>
+        <button class="nav__mobile-item" type="button" data-section="downloads">Downloads</button>
         <span class="nav__mobile-label">Résumé</span>
         <button class="nav__mobile-item" type="button" data-section="education">Education</button>
         <button class="nav__mobile-item" type="button" data-section="work">Work Experience</button>
@@ -656,6 +658,55 @@
             <a href="https://www.thinquebytes.com/home" target="_blank">Link to Thinquebytes' Website</a><br />
             <a href="https://2025.ieee-icra.org/" target="_blank">Link to ICRA 2025 Website</a>
           </p>
+        </div>
+      </section>
+
+      <!-- ===================== DOWNLOADS =====================
+           Software I distribute. One dock per program, stacked like every
+           other page.
+
+           Each dock: icon, name (+ live version), tag line, blurb, then the
+           ways to get it. Links use GitHub's permanent "latest release" URLs
+           (…/releases/latest/download/<asset>), so a new release needs no
+           edit here as long as the asset names stay the same.
+
+           index.js (initDownloads) adds the live bits:
+             .download-card[data-gh-repo]  -> fetches the latest release tag
+                                              into .download-card__version
+             .download-card__platform[data-os] -> the visitor's OS gets the
+                                              .is-current glow (mac / linux)
+             .download-card__copy          -> copies the install command
+           ================================================================ -->
+      <section id="downloads">
+        <h1 class="page-title">Downloads</h1>
+        <div class="bubble download-card" data-gh-repo="wesleyjunkins/PSL">
+          <div class="download-card__icon" aria-hidden="true">
+            <!-- PSL icon: a heartbeat/EEG trace inside a code bracket. -->
+            <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 12 H12 a4 4 0 0 0 -4 4 v32 a4 4 0 0 0 4 4 h8" />
+              <path d="M44 12 h8 a4 4 0 0 1 4 4 v32 a4 4 0 0 1 -4 4 h-8" />
+              <path d="M14 34 h8 l4 -12 l6 24 l6 -20 l3 8 h9" />
+            </svg>
+          </div>
+          <h3>Physiological Scripting Language <span class="download-card__version" aria-live="polite"></span></h3>
+          <h4>PSL</h4>
+          <p>A scripting language for working with physiological signals such as EEG and EMG, so experiments and real-time pipelines can be written in a few readable lines instead of boilerplate.</p>
+
+          <p class="download-card__label">Recommended: paste this in a terminal. It picks the right file, verifies it, and puts <code>psl</code> on your PATH.</p>
+          <div class="download-card__cmd">
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/wesleyjunkins/PSL/main/install.sh | sh</code></pre>
+            <button class="btn download-card__copy" type="button" aria-label="Copy install command">Copy</button>
+          </div>
+
+          <p class="download-card__label">Or download the binary for your machine:</p>
+          <div class="download-card__platforms">
+            <a class="btn download-card__platform" data-os="mac" href="https://github.com/wesleyjunkins/PSL/releases/latest/download/psl-aarch64-apple-darwin.tar.gz" rel="noopener">macOS, Apple Silicon</a>
+            <a class="btn download-card__platform" data-os="mac" href="https://github.com/wesleyjunkins/PSL/releases/latest/download/psl-x86_64-apple-darwin.tar.gz" rel="noopener">macOS, Intel</a>
+            <a class="btn download-card__platform" data-os="linux" href="https://github.com/wesleyjunkins/PSL/releases/latest/download/psl-x86_64-unknown-linux-gnu.tar.gz" rel="noopener">Linux, x86_64</a>
+            <a class="btn download-card__platform" data-os="linux" href="https://github.com/wesleyjunkins/PSL/releases/latest/download/psl-aarch64-unknown-linux-gnu.tar.gz" rel="noopener">Linux, arm64</a>
+          </div>
+
+          <p class="download-card__note">Checksums: <a href="https://github.com/wesleyjunkins/PSL/releases/latest/download/SHA256SUMS" rel="noopener">SHA256SUMS</a>. On macOS, run <code>xattr -d com.apple.quarantine psl</code> once after unpacking a browser download.</p>
         </div>
       </section>
     </main>

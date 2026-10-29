@@ -623,12 +623,12 @@ function renderProjectImages() {
       btn.textContent = `View all ${images.length} images`;
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        createGalleryModal(images, 0);
+        createGalleryModal(images, 0, figure);
       });
       figure.appendChild(btn);
     } else {
       figure.classList.add("is-single");
-      figure.addEventListener("click", () => createGalleryModal(images, 0));
+      figure.addEventListener("click", () => createGalleryModal(images, 0, figure));
     }
 
     bubble.appendChild(figure);
@@ -636,17 +636,31 @@ function renderProjectImages() {
   });
 }
 
-/* Fullscreen image carousel, styled as site chrome: the control pill and the
-   close button are glass (refraction via LiquidGlass on Chromium — skipped in
-   accessibility mode, where the CSS shows solid panels), the image sits in a
-   dock-like rimmed frame. Built on demand, removed on close. Closes on the ✕,
-   click-outside, or Esc; ← / → and swiping step through when there's more
-   than one. */
-function createGalleryModal(images, startIndex = 0) {
+/* Fullscreen "Cover Flow" gallery, styled as site chrome: the control pill
+   and the close button are glass (refraction via LiquidGlass on Chromium —
+   skipped in accessibility mode, where the CSS shows solid panels). Every
+   image is a slide in a 3D stage: the current one sits flat in the middle,
+   the others fan out to each side, turned and shrunk (iTunes-style). Slides
+   get data-pos = their offset from the current image (-4…4, or "far") and
+   the CSS places them from that. Built on demand, removed on close. Closes
+   on the ✕, click-outside, or Esc; ← / →, swiping, the arrow pill, or
+   clicking a side cover moves the row. The row is linear (no wrap-around),
+   like the original.
+
+   Opening from a dock thumbnail (originEl = its square frame) plays a
+   two-beat entrance: the current cover starts over the thumbnail (a FLIP
+   transform from the thumbnail's rect to the cover's final rect) and zooms
+   into place, then the other covers, which were gathered behind it, fan out
+   to their positions with a small stagger. Without originEl (or in
+   accessibility mode) the modal just pops in as before. */
+function createGalleryModal(images, startIndex = 0, originEl = null) {
   document.querySelector(".gallery-modal-overlay")?.remove();
   let i = startIndex;
   const multi = images.length > 1;
   const opener = document.activeElement; // to hand focus back on close
+  // Animated open/close only when launched from a dock thumbnail and not in
+  // accessibility mode (where motion is off and side covers are hidden).
+  const zoom = !!originEl && !document.documentElement.classList.contains("a11y");
 
   const overlay = document.createElement("div");
   overlay.className = "gallery-modal-overlay";
@@ -663,12 +677,26 @@ function createGalleryModal(images, startIndex = 0) {
   closeBtn.setAttribute("aria-label", "Close gallery");
   closeBtn.innerHTML = "&times;";
 
-  const figure = document.createElement("div");
-  figure.className = "gallery-modal-figure";
-  const img = document.createElement("img");
-  img.className = "gallery-modal-image";
-  img.decoding = "async";
-  figure.appendChild(img);
+  const stage = document.createElement("div");
+  stage.className = "gallery-modal-stage";
+  const slides = images.map((src, k) => {
+    const slide = document.createElement("div");
+    slide.className = "gallery-modal-slide";
+    const im = document.createElement("img");
+    im.className = "gallery-modal-image";
+    im.src = src;
+    im.alt = `Image ${k + 1} of ${images.length}`;
+    im.decoding = "async";
+    im.draggable = false;
+    slide.appendChild(im);
+    if (multi) {
+      slide.addEventListener("click", () => {
+        if (k !== i) show(k); // a side cover jumps to itself
+      });
+    }
+    stage.appendChild(slide);
+    return slide;
+  });
 
   const nav = document.createElement("div");
   nav.className = "gallery-modal-nav";
@@ -679,6 +707,7 @@ function createGalleryModal(images, startIndex = 0) {
   prevBtn.innerHTML = "&#9664;";
   const counter = document.createElement("span");
   counter.className = "gallery-modal-counter";
+  counter.setAttribute("aria-live", "polite");
   const nextBtn = document.createElement("button");
   nextBtn.type = "button";
   nextBtn.className = "gallery-modal-btn";
@@ -688,15 +717,17 @@ function createGalleryModal(images, startIndex = 0) {
   if (!multi) prevBtn.style.display = nextBtn.style.display = "none";
 
   function show(idx) {
-    i = (idx + images.length) % images.length;
-    img.src = images[i];
-    img.alt = `Image ${i + 1} of ${images.length}`;
+    i = Math.max(0, Math.min(images.length - 1, idx));
+    slides.forEach((s, k) => {
+      const pos = k - i;
+      s.dataset.pos = Math.abs(pos) > 4 ? (pos < 0 ? "far-left" : "far-right") : String(pos);
+      s.classList.toggle("is-current", pos === 0);
+      // Only the centre image is "the" image for assistive tech.
+      s.setAttribute("aria-hidden", pos === 0 ? "false" : "true");
+    });
     counter.textContent = `${i + 1} / ${images.length}`;
-    if (multi) {
-      // Warm the neighbours so stepping feels instant.
-      new Image().src = images[(i + 1) % images.length];
-      new Image().src = images[(i - 1 + images.length) % images.length];
-    }
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === images.length - 1;
   }
 
   // Glassify the gallery chrome like the site chrome (no-op off Chromium;
@@ -709,12 +740,45 @@ function createGalleryModal(images, startIndex = 0) {
     );
   }
 
+  let closing = false;
   function close() {
+    if (closing) return;
+    closing = true;
     document.removeEventListener("keydown", onKey);
-    glasses.forEach((g) => g.destroy());
-    document.body.style.overflow = ""; // release the scroll lock
-    overlay.remove();
-    if (opener && opener.focus) opener.focus();
+    const finish = () => {
+      glasses.forEach((g) => g.destroy());
+      document.body.style.overflow = ""; // release the scroll lock
+      overlay.remove();
+      if (opener && opener.focus) opener.focus();
+    };
+    if (!zoom) { finish(); return; }
+
+    // Exit, quicker than the entrance: (1) every cover but the thumbnail's
+    // fades out while that one snaps to the centre and the overlay clears;
+    // (2) it then flies back down into its frame on the page and the modal
+    // is removed the moment it lands.
+    const hero = slides[startIndex];
+    hero.classList.add("is-origin");
+    stage.classList.add("is-closing");
+    overlay.classList.add("is-closing");
+    setTimeout(() => {
+      // The cover's untransformed rect: centred in the stage, top-aligned
+      // (getBoundingClientRect would include any in-flight transform).
+      const to = originEl.getBoundingClientRect();
+      const st = stage.getBoundingClientRect();
+      const w = hero.offsetWidth;
+      const h = hero.offsetHeight;
+      const fromLeft = st.left + (st.width - w) / 2;
+      const fromTop = st.top;
+      if (to.width && w) {
+        const s = Math.min(to.width / w, to.height / h);
+        const dx = to.left + to.width / 2 - (fromLeft + w / 2);
+        const dy = to.top + to.height / 2 - (fromTop + h / 2);
+        hero.style.transition = "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)";
+        hero.style.transform = `translate(${dx}px, ${dy}px) scale(${s})`;
+      }
+      setTimeout(finish, 290);
+    }, 150);
   }
   function onKey(e) {
     if (e.key === "Escape") close();
@@ -749,11 +813,46 @@ function createGalleryModal(images, startIndex = 0) {
   );
 
   show(i);
-  modal.append(figure, nav);
+  modal.append(stage, nav);
   overlay.append(modal, closeBtn);
+
+  if (zoom) {
+    modal.classList.add("is-zooming");   // no pop animation: the cover does the entrance
+    stage.classList.add("is-gathering"); // side covers wait behind the centre
+  }
+
   document.body.appendChild(overlay);
   document.body.style.overflow = "hidden"; // lock page scroll behind the modal
   closeBtn.focus();
+
+  if (zoom) {
+    // FLIP: the centre cover's CSS transform is identity, so its rect now IS
+    // its final rect. Start it over the thumbnail (uniform scale, so the image
+    // never distorts) and let the transform transition carry it home.
+    const hero = slides[i];
+    const from = originEl.getBoundingClientRect();
+    const to = hero.getBoundingClientRect();
+    if (from.width && to.width) {
+      const s = Math.min(from.width / to.width, from.height / to.height);
+      const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+      const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+      hero.style.transition = "none";
+      hero.style.transform = `translate(${dx}px, ${dy}px) scale(${s})`;
+      void hero.offsetWidth; // commit the start state
+      requestAnimationFrame(() => {
+        hero.style.transition = "";
+        hero.style.transform = "";
+      });
+    }
+    // Beat two: once the cover has landed, release the others. is-fanning
+    // adds the per-cover stagger; it's dropped after the fan-out so normal
+    // stepping has no delay.
+    setTimeout(() => {
+      stage.classList.remove("is-gathering");
+      stage.classList.add("is-fanning");
+      setTimeout(() => stage.classList.remove("is-fanning"), 900);
+    }, 420);
+  }
 }
 window.createGalleryModal = createGalleryModal;
 
@@ -802,6 +901,60 @@ function initMobileNav() {
 }
 
 /* =========================================================
+   DOWNLOADS — live version, OS highlight, copy button
+   Markup is described in the DOWNLOADS comment in index.html. Everything
+   here is best effort: links are static GitHub "latest release" permalinks,
+   so the page works with none of this.
+   ========================================================= */
+function initDownloads() {
+  const ua = navigator.userAgent || "";
+  // Browsers can't tell Apple Silicon from Intel, so both Mac links light
+  // up. iPhone/iPad UAs contain "Mac OS X" and Android ones contain "Linux";
+  // neither can run the binaries, so they're excluded.
+  const os = /Macintosh/.test(ua) && !/iPhone|iPad/.test(ua) ? "mac"
+    : /Linux/.test(ua) && !/Android/.test(ua) ? "linux"
+    : null;
+
+  document.querySelectorAll(".download-card").forEach((card) => {
+    // Highlight the visitor's OS with the same glow the nav uses for the
+    // current page. aria-label tells screen-reader users which ones match.
+    if (os) {
+      card.querySelectorAll(`.download-card__platform[data-os="${os}"]`).forEach((a) => {
+        a.classList.add("is-current");
+        a.setAttribute("aria-label", `${a.textContent.trim()} (matches your system)`);
+      });
+    }
+
+    // Copy the install command. navigator.clipboard needs a secure context
+    // (https or localhost); the button just stays quiet elsewhere.
+    card.querySelectorAll(".download-card__copy").forEach((btn) => {
+      const code = btn.parentElement?.querySelector("code");
+      if (!code || !navigator.clipboard) return;
+      const label = btn.textContent;
+      btn.addEventListener("click", () => {
+        navigator.clipboard.writeText(code.textContent.trim()).then(() => {
+          btn.textContent = "Copied";
+          setTimeout(() => (btn.textContent = label), 1500);
+        }).catch(() => {});
+      });
+    });
+
+    // Latest release tag (one unauthenticated API call; GitHub allows 60 per
+    // hour per visitor IP). Fails silently for a private repo, offline, or
+    // when rate-limited — the version span simply stays empty.
+    const repo = (card.dataset.ghRepo || "").trim();
+    const version = card.querySelector(".download-card__version");
+    if (!version || !/^[\w.-]+\/[\w.-]+$/.test(repo) || typeof fetch !== "function") return;
+    fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+      headers: { Accept: "application/vnd.github+json" },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((rel) => { if (rel?.tag_name) version.textContent = rel.tag_name; })
+      .catch(() => {});
+  });
+}
+
+/* =========================================================
    ACCESSIBILITY MODE
    html.a11y (set pre-paint by the inline <head> script when saved, toggled
    live by the #a11y-toggle button) swaps the liquid-glass presentation for
@@ -839,5 +992,6 @@ if (!a11yOn()) ensureGlass();
 initNav();
 initDropdowns();
 initMobileNav();
+initDownloads();
 showSection("objective"); // default page
 
