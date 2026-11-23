@@ -39,7 +39,7 @@ const TUNING = {
   alpha: 0.93,        // block-out opacity
   blend: "difference",// how the blue (Y) gradient blends over the red (X)
   chroma: { r: 0, g: 10, b: 20 }, // per-channel offsets AT refScale = aberration
-  outputBlur: 0.5,    // feGaussianBlur stdDeviation on the final result
+  outputBlur: 1.6,    // feGaussianBlur stdDeviation on the final result (0.5 = crisp; raised for a touch of frost)
   saturate: 1.5,      // layered after url() in the backdrop-filter shorthand
   brightness: 1.06,
 };
@@ -461,14 +461,375 @@ function glassifySurfaces() {
   document.querySelectorAll(".bubble").forEach((el) =>
     LiquidGlass.apply(el, { chromatic: false, band: 8 })
   );
-  document.querySelectorAll(".dropdown-menu").forEach((el) =>
-    LiquidGlass.apply(el)
-  );
+  // Dropdown flyouts are solid panels (readability), not glassified.
   // The accessibility orb: full-axis refraction, like a tiny bubble. (In
   // accessibility mode glassify is skipped and the CSS shows it solid.)
   document.querySelectorAll(".a11y-toggle").forEach((el) =>
     LiquidGlass.apply(el, { radius: "pill", intensity: 0.3 })
   );
+  // Research-overview orbs: the same round refraction as the accessibility orb.
+  document.querySelectorAll(".orb").forEach((el) =>
+    LiquidGlass.apply(el, { radius: "pill", intensity: 0.3 })
+  );
+}
+
+/* Research overview: the scroll story (markup in #research, styles under
+   "RESEARCH OVERVIEW" in index.css). The page's scroll position through the
+   tall .story scrubs a paused Web Animations timeline, product-launch-page
+   style: every orb, card and line has ONE paused animation spanning the whole
+   story (keyframe offsets 0 → 1), and scrolling sets their currentTime, so
+   scrolling back plays everything in reverse for free. Rebuilt from the
+   stage's size when the page is shown and on resize; cancelled in
+   accessibility mode, where the CSS lays the same content out as a column. */
+function initResearchStory() {
+  const story = document.querySelector(".story");
+  if (!story) return;
+  const section = story.closest("section");
+  const stage = story.querySelector(".story__stage");
+  const svg = story.querySelector(".story__lines");
+  const hint = story.querySelector(".story__hint");
+  const orb = {};
+  story.querySelectorAll(".story__orb").forEach((el) => (orb[el.dataset.node] = el));
+  const card = {};
+  story.querySelectorAll(".story__card").forEach((el) => (card[el.dataset.card] = el));
+
+  const TL = 1000; // virtual ms: currentTime = progress * TL
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const a11y = () => document.documentElement.classList.contains("a11y");
+  let anims = [];
+
+  /* Timeline: [start, end] as fractions of the scroll through .story. The
+     gaps between beats are holds. Each element's keyframes must stay in
+     ascending order, so keep draws before fades. */
+  const T = {
+    hint:           [0.00, 0.05],
+    hccUp:          [0.05, 0.13],
+    physioOut:      [0.13, 0.22],
+    haiOut:         [0.15, 0.24],
+    l1:             [0.25, 0.31], // Physio — HAI
+    l2:             [0.31, 0.36], // down to the intersection card
+    cardInter:      [0.33, 0.39],
+    cardInterOut:   [0.43, 0.47], // also fades l2
+    sensingOut:     [0.45, 0.53],
+    l3:             [0.52, 0.56], // Physio → Sensing
+    cardSensing:    [0.53, 0.58],
+    cardSensingOut: [0.61, 0.65],
+    meaningOut:     [0.63, 0.70],
+    evalOut:        [0.65, 0.72],
+    l4:             [0.69, 0.73], // HAI → Meaning
+    l5:             [0.71, 0.75], // HAI → Evaluation
+    cardHai:        [0.72, 0.77],
+    cardHaiOut:     [0.80, 0.84],
+    treeOut:        [0.80, 0.84], // l1, l3, l4, l5 fade
+    parentsOut:     [0.81, 0.87], // HCC, Physio, HAI drift up and fade
+    lineup:         [0.84, 0.91], // Sensing / Meaning / Evaluation line up
+    l6:             [0.91, 0.94], // Sensing — Meaning
+    l7:             [0.94, 0.97], // Meaning — Evaluation
+    summary:        [0.95, 1.00],
+  };
+
+  function build() {
+    for (const a of anims) a.cancel();
+    anims = [];
+    svg.replaceChildren();
+    if (a11y()) return;
+    const W = stage.clientWidth, H = stage.clientHeight;
+    if (!W || !H) return; // page hidden: built when it is shown
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const X = (f) => f * W, Y = (f) => f * H;
+    const r = { child: orb.physio.offsetWidth / 2, leaf: orb.sensing.offsetWidth / 2 };
+    // Slots: x from the stage centre, y from its top (px).
+    const P = {
+      hcc0: [0, Y(0.46)], hcc: [0, Y(0.20)], hccOut: [0, Y(0.10)],
+      physio: [X(-0.17), Y(0.42)], hai: [X(0.17), Y(0.42)],
+      sensing: [X(-0.22), Y(0.64)], meaning: [X(0.08), Y(0.64)], evaluation: [X(0.32), Y(0.64)],
+      lineS: [X(-0.24), Y(0.34)], lineM: [0, Y(0.34)], lineE: [X(0.24), Y(0.34)],
+      cardTop: Y(0.72), summaryTop: Y(0.50),
+    };
+    const up = ([x, y]) => [x, y - Y(0.1)];
+    const run = (el, frames) => {
+      const a = el.animate(frames, { duration: TL, fill: "both" });
+      a.pause();
+      anims.push(a);
+    };
+
+    // Orbs. Keyframe = [offset, [x, y], opacity]; hidden while fully
+    // transparent so an invisible orb costs no backdrop-filter work.
+    const orbF = (list) => list.map(([o, p, op]) => ({
+      offset: o, easing: EASE,
+      transform: `translate(-50%, -50%) translate(${p[0]}px, ${p[1]}px)`,
+      opacity: op, visibility: op > 0 ? "visible" : "hidden",
+    }));
+    run(orb.hcc, orbF([
+      [0, P.hcc0, 1], [T.hccUp[0], P.hcc0, 1], [T.hccUp[1], P.hcc, 1],
+      [T.parentsOut[0], P.hcc, 1], [T.parentsOut[1], P.hccOut, 0], [1, P.hccOut, 0],
+    ]));
+    const emerge = (el, from, to, t, out) => run(el, orbF([
+      [0, from, 0], [t[0], from, 0], [t[1], to, 1],
+      [out[0], to, 1], [out[1], up(to), 0], [1, up(to), 0],
+    ]));
+    emerge(orb.physio, P.hcc, P.physio, T.physioOut, T.parentsOut);
+    emerge(orb.hai, P.hcc, P.hai, T.haiOut, T.parentsOut);
+    const leaf = (el, from, to, t, line) => run(el, orbF([
+      [0, from, 0], [t[0], from, 0], [t[1], to, 1],
+      [T.lineup[0], to, 1], [T.lineup[1], line, 1], [1, line, 1],
+    ]));
+    leaf(orb.sensing, P.physio, P.sensing, T.sensingOut, P.lineS);
+    leaf(orb.meaning, P.hai, P.meaning, T.meaningOut, P.lineM);
+    leaf(orb.evaluation, P.hai, P.evaluation, T.evalOut, P.lineE);
+
+    // Cards rise in (and out) at a fixed top.
+    const cf = (y, op) => ({
+      easing: EASE, transform: `translate(-50%, 0) translate(0, ${y}px)`,
+      opacity: op, visibility: op > 0 ? "visible" : "hidden",
+    });
+    const cardF = (y, tin, tout) => {
+      const f = [{ offset: 0, ...cf(y + 28, 0) }, { offset: tin[0], ...cf(y + 28, 0) }, { offset: tin[1], ...cf(y, 1) }];
+      if (tout) f.push({ offset: tout[0], ...cf(y, 1) }, { offset: tout[1], ...cf(y - 16, 0) }, { offset: 1, ...cf(y - 16, 0) });
+      else f.push({ offset: 1, ...cf(y, 1) });
+      return f;
+    };
+    run(card.intersection, cardF(P.cardTop, T.cardInter, T.cardInterOut));
+    run(card.sensing, cardF(P.cardTop, T.cardSensing, T.cardSensingOut));
+    run(card.hai, cardF(P.cardTop, T.cardHai, T.cardHaiOut));
+    run(card.summary, cardF(P.summaryTop, T.summary, null));
+    if (hint) {
+      run(hint, [
+        { offset: 0, opacity: 1 },
+        { offset: T.hint[1], opacity: 0, visibility: "hidden" },
+        { offset: 1, opacity: 0, visibility: "hidden" },
+      ]);
+    }
+
+    // Lines: a dash-offset sweep draws them; some fade out later. Endpoints
+    // are centre-relative like the slots. curved = S-curve with vertical
+    // tangents (parent → child); otherwise straight.
+    const NS = "http://www.w3.org/2000/svg";
+    const line = (from, to, draw, fade, curved) => {
+      const [x1, y1] = [W / 2 + from[0], from[1]];
+      const [x2, y2] = [W / 2 + to[0], to[1]];
+      const ym = (y1 + y2) / 2;
+      const p = document.createElementNS(NS, "path");
+      p.setAttribute("d", curved
+        ? `M ${x1} ${y1} C ${x1} ${ym}, ${x2} ${ym}, ${x2} ${y2}`
+        : `M ${x1} ${y1} L ${x2} ${y2}`);
+      svg.appendChild(p);
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = `${len}px`;
+      const f = [
+        { offset: 0, strokeDashoffset: `${len}px`, opacity: 1 },
+        { offset: draw[0], strokeDashoffset: `${len}px`, easing: EASE },
+        { offset: draw[1], strokeDashoffset: "0px" },
+      ];
+      if (fade) {
+        f.push(
+          { offset: fade[0], opacity: 1 },
+          { offset: fade[1], opacity: 0, visibility: "hidden" },
+          { offset: 1, strokeDashoffset: "0px", opacity: 0, visibility: "hidden" }
+        );
+      } else {
+        f.push({ offset: 1, strokeDashoffset: "0px", opacity: 1 });
+      }
+      run(p, f);
+    };
+    line([P.physio[0] + r.child, P.physio[1]], [P.hai[0] - r.child, P.hai[1]], T.l1, T.treeOut, false);
+    line([0, P.physio[1]], [0, P.cardTop - 6], T.l2, T.cardInterOut, false);
+    line([P.physio[0], P.physio[1] + r.child], [P.sensing[0], P.sensing[1] - r.leaf], T.l3, T.treeOut, true);
+    line([P.hai[0], P.hai[1] + r.child], [P.meaning[0], P.meaning[1] - r.leaf], T.l4, T.treeOut, true);
+    line([P.hai[0], P.hai[1] + r.child], [P.evaluation[0], P.evaluation[1] - r.leaf], T.l5, T.treeOut, true);
+    line([P.lineS[0] + r.leaf, P.lineS[1]], [P.lineM[0] - r.leaf, P.lineM[1]], T.l6, null, false);
+    line([P.lineM[0] + r.leaf, P.lineM[1]], [P.lineE[0] - r.leaf, P.lineE[1]], T.l7, null, false);
+  }
+
+  // Scroll → progress → currentTime on every animation (one rAF per frame).
+  let raf = 0;
+  function update() {
+    raf = 0;
+    if (!anims.length) return;
+    const span = story.offsetHeight - window.innerHeight;
+    const top = story.getBoundingClientRect().top;
+    const p = span > 0 ? Math.min(1, Math.max(0, -top / span)) : 0;
+    const t = p * TL;
+    for (const a of anims) a.currentTime = t;
+  }
+  const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+  window.addEventListener("scroll", schedule, { passive: true });
+  let rt = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      if (section.classList.contains("is-active")) { build(); update(); }
+    }, 120);
+  }, { passive: true });
+
+  // Each visit starts at the top (showSection scrolls to 0): rebuild for the
+  // current size, scrub to the start, and float the stage in.
+  function enter() {
+    build();
+    update();
+    stage.style.animation = "none";
+    void stage.offsetWidth;
+    stage.style.animation = "storyIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both";
+  }
+  if (typeof MutationObserver !== "undefined") {
+    new MutationObserver(() => {
+      if (section.classList.contains("is-active")) enter();
+    }).observe(section, { attributes: true, attributeFilter: ["class"] });
+    // Accessibility mode toggled on/off: drop or restore the timeline.
+    new MutationObserver(() => {
+      if (section.classList.contains("is-active")) { build(); update(); }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  }
+  if (section.classList.contains("is-active")) enter();
+}
+
+/* Showcases: pinned scroll presentations driven entirely by markup (see the
+   SHOWCASE comment in index.html / index.css). Same technique as the Research
+   story: each timed element gets ONE paused Web Animation spanning the whole
+   scroll (offsets 0 → 1) and scrolling sets its currentTime, so it plays
+   forwards and backwards for free.
+
+     data-in="a b" / data-out="c d"   scroll-progress ranges (0-1)
+     data-fx   rise  (default) slides up into place, keeps rising on the way out
+               fade  opacity only (leaves the element's own transform alone)
+               zoom  scales up slightly as it leaves (text only)
+               grow  starts below the fold at half size and grows into place
+               left / right  slides in from that side with a slight turn
+               cross flies straight across the stage, left to right, from
+                     the START of data-in to the END of data-out (constant
+                     speed, so two of them with different spans race)
+     data-count  counts from 0 to the element's number while its nearest
+                 [data-in] ancestor (or itself) arrives
+
+   Rebuilt when the page is shown and on resize; cancelled in accessibility
+   mode, where the CSS lays the content out as a column. */
+function initShowcases() {
+  const TL = 1000; // virtual ms: currentTime = progress * TL
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const a11y = () => document.documentElement.classList.contains("a11y");
+  const range = (el, name) => {
+    const v = (el.dataset[name] || "").trim().split(/\s+/).map(Number);
+    return v.length === 2 && v.every(Number.isFinite) && v[1] >= v[0] ? v : null;
+  };
+
+  document.querySelectorAll(".showcase").forEach((show) => {
+    const section = show.closest("section");
+    const stage = show.querySelector(".showcase__stage");
+    if (!section || !stage) return;
+    const counters = [...stage.querySelectorAll("[data-count]")].map((el) => ({
+      el,
+      target: parseFloat(el.textContent) || 0,
+      span: range(el.closest("[data-in]") || el, "in") || [0, 0],
+    }));
+    let anims = [];
+
+    function build() {
+      for (const a of anims) a.cancel();
+      anims = [];
+      for (const c of counters) c.el.textContent = c.target; // resting value
+      if (a11y()) return;
+      const H = stage.clientHeight, W = stage.clientWidth;
+      if (!H) return; // page hidden: built when it is shown
+
+      // fx → [state before arriving, state after leaving]; null = no transform.
+      const FX = {
+        rise: ["translateY(44px)", "translateY(-32px)"],
+        fade: [null, null],
+        zoom: ["scale(0.9)", "scale(1.2)"],
+        grow: [`translateY(${Math.round(H * 0.74)}px) scale(0.5)`, "scale(0.94)"],
+        left: [`translateX(${Math.round(-W * 0.7)}px) rotate(-14deg)`, "translateY(-40px) scale(0.92)"],
+        right: [`translateX(${Math.round(W * 0.7)}px) rotate(14deg)`, "translateY(-40px) scale(0.92)"],
+      };
+      stage.querySelectorAll("[data-in], [data-out]").forEach((el) => {
+        const tin = range(el, "in"), tout = range(el, "out");
+        if (!tin && !tout) return;
+        if (el.dataset.fx === "cross" && tin && tout) {
+          // Off-screen left → off-screen right at constant speed; hidden
+          // outside the span. Travel is measured from the stage centre,
+          // where the grid places the element.
+          const d = Math.round(W / 2 + el.offsetWidth);
+          const at = (x, vis) => ({ transform: `translateX(${x}px)`, visibility: vis ? "visible" : "hidden" });
+          const f = [];
+          if (tin[0] > 0) f.push({ offset: 0, ...at(-d, false) });
+          f.push({ offset: tin[0], ...at(-d, true) }, { offset: tout[1], ...at(d, true) });
+          if (tout[1] < 1) f.push({ offset: Math.min(1, tout[1] + 0.0001), ...at(d, false) }, { offset: 1, ...at(d, false) });
+          const a = el.animate(f, { duration: TL, fill: "both" });
+          a.pause();
+          anims.push(a);
+          return;
+        }
+        const fx = el.dataset.fx in FX ? el.dataset.fx : "rise";
+        const [before, after] = FX[fx];
+        const state = (transform, opacity) => {
+          const k = { opacity, visibility: opacity > 0 ? "visible" : "hidden", easing: EASE };
+          if (before !== null) k.transform = transform || "none";
+          return k;
+        };
+        const shown = state(null, 1);
+        // "grow" waits below the fold fully opaque; everything else fades in.
+        const start = state(before, fx === "grow" ? 1 : 0);
+        const end = state(after, 0);
+        const f = [];
+        if (tin) {
+          f.push({ offset: 0, ...start });
+          if (tin[0] > 0) f.push({ offset: tin[0], ...start });
+          f.push({ offset: tin[1], ...shown });
+        } else {
+          f.push({ offset: 0, ...shown });
+        }
+        if (tout) {
+          if (tout[0] > f[f.length - 1].offset) f.push({ offset: tout[0], ...shown });
+          f.push({ offset: tout[1], ...end });
+          if (tout[1] < 1) f.push({ offset: 1, ...end });
+        } else if (f[f.length - 1].offset < 1) {
+          f.push({ offset: 1, ...shown });
+        }
+        const a = el.animate(f, { duration: TL, fill: "both" });
+        a.pause();
+        anims.push(a);
+      });
+    }
+
+    let raf = 0;
+    function update() {
+      raf = 0;
+      if (!anims.length) return;
+      const span = show.offsetHeight - window.innerHeight;
+      const top = show.getBoundingClientRect().top;
+      const p = span > 0 ? Math.min(1, Math.max(0, -top / span)) : 0;
+      for (const a of anims) a.currentTime = p * TL;
+      for (const c of counters) {
+        const [a, b] = c.span;
+        const k = b > a ? Math.min(1, Math.max(0, (p - a) / (b - a))) : 1;
+        const v = String(Math.round(c.target * (1 - Math.pow(1 - k, 3))));
+        if (c.el.textContent !== v) c.el.textContent = v;
+      }
+    }
+    const active = () => section.classList.contains("is-active");
+    window.addEventListener("scroll", () => {
+      if (!raf && active()) raf = requestAnimationFrame(update);
+    }, { passive: true });
+    let rt = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => { if (active()) { build(); update(); } }, 120);
+    }, { passive: true });
+
+    function enter() {
+      build();
+      update();
+      stage.style.animation = "none";
+      void stage.offsetWidth;
+      stage.style.animation = "storyIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both";
+    }
+    if (typeof MutationObserver !== "undefined") {
+      new MutationObserver(() => { if (active()) enter(); })
+        .observe(section, { attributes: true, attributeFilter: ["class"] });
+      new MutationObserver(() => { if (active()) { build(); update(); } })
+        .observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    }
+    if (active()) enter();
+  });
 }
 
 /* Page switching: show one section, restart its staggered rise-in, sync the
@@ -480,7 +841,7 @@ function showSection(name) {
 
   const active = document.getElementById(name);
   if (active) {
-    active.querySelectorAll(".bubble").forEach((b, i) => {
+    active.querySelectorAll(".bubble, .free").forEach((b, i) => {
       b.style.animation = "none";
       void b.offsetWidth; // reflow → restart the animation on every visit
       b.style.animation =
@@ -500,11 +861,11 @@ function showSection(name) {
   // Selected-page GLOW always lands on a TOP-LEVEL nav button: About / My Links
   // map directly; a dropdown sub-page (e.g. Education) lights its Résumé /
   // Research toggle instead, never the sub-item itself.
-  document.querySelectorAll(".btn.is-current").forEach((b) =>
+  document.querySelectorAll(".nav__link.is-current").forEach((b) =>
     b.classList.remove("is-current")
   );
   let current = document.querySelector(
-    `.nav__buttons > .btn[data-section="${name}"]`
+    `.nav__buttons > .nav__link[data-section="${name}"]`
   );
   if (!current) {
     const item = document.querySelector(`.dropdown-item[data-section="${name}"]`);
@@ -512,10 +873,7 @@ function showSection(name) {
   }
   if (current) current.classList.add("is-current");
 
-  document.querySelectorAll(".dropdown.is-open").forEach((d) =>
-    d.classList.remove("is-open")
-  );
-  syncDropdownAria();
+  setDropdown(null);
 
   // Close the mobile menu after navigating.
   const navEl = document.querySelector(".nav");
@@ -527,6 +885,45 @@ function showSection(name) {
   }
 }
 window.showSection = showSection;
+
+/* Floating tiles (.float-tiles > .bubble): under a mouse, a tile turns a few
+   degrees to FACE the cursor (cursor to the right → the tile turns right),
+   and --mx / --my move its highlight. The turn is written to the `rotate`
+   property as one axis-angle rotation, leaving `transform` to the rise-in
+   animation. Leaving the tile clears it and the CSS transition settles it
+   flat. Skipped for touch / pen and in accessibility mode. */
+function initTilt() {
+  const MAX = 5; // degrees at the tile's edge
+  document.querySelectorAll(".float-tiles > .bubble").forEach((el) => {
+    let raf = 0, last = null;
+    const apply = () => {
+      raf = 0;
+      if (!last || document.documentElement.classList.contains("a11y")) return;
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      // -1 … 1 from the tile's centre.
+      const nx = Math.max(-1, Math.min(1, ((last.clientX - r.left) / r.width) * 2 - 1));
+      const ny = Math.max(-1, Math.min(1, ((last.clientY - r.top) / r.height) * 2 - 1));
+      const rx = -ny * MAX; // cursor above → face up
+      const ry = nx * MAX;  // cursor right → face right
+      const angle = Math.hypot(rx, ry);
+      el.style.rotate = angle < 0.01 ? "none" : `${rx} ${ry} 0 ${angle.toFixed(2)}deg`;
+      el.style.setProperty("--mx", `${((nx + 1) * 50).toFixed(1)}%`);
+      el.style.setProperty("--my", `${((ny + 1) * 50).toFixed(1)}%`);
+      el.classList.add("is-tilting");
+    };
+    el.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse") return;
+      last = e;
+      if (!raf) raf = requestAnimationFrame(apply);
+    });
+    el.addEventListener("pointerleave", () => {
+      last = null;
+      el.classList.remove("is-tilting");
+      el.style.rotate = "";
+    });
+  });
+}
 
 /* Any control with data-section switches page. */
 function initNav() {
@@ -546,37 +943,77 @@ function syncDropdownAria() {
   );
 }
 
-/* Résumé / Research dropdowns: toggle on click, close others + on outside
-   click or Escape (Escape also closes the mobile menu). */
+/* Nav flyouts (Projects, CV). Apple-style: hovering a nav word with a menu
+   opens a wide panel under the bar and dims the page (.nav-curtain); moving
+   off the bar and the panel closes it after a short grace period. Click and
+   keyboard still work: click toggles, Escape / outside click close (Escape
+   also closes the mobile menu). setDropdown() is the single place that opens
+   and closes, so the curtain and aria-expanded can't drift out of sync. */
+function setDropdown(open) {
+  const nav = document.querySelector(".nav");
+  document.querySelectorAll(".dropdown").forEach((d) => {
+    const on = d === open;
+    if (on && nav) {
+      // Line the links up under the word that opened the panel.
+      const x = d.querySelector(".dropdown-toggle").getBoundingClientRect().left -
+        nav.getBoundingClientRect().left;
+      d.querySelector(".dropdown-menu").style.setProperty("--menu-x", `${Math.max(16, x)}px`);
+    }
+    d.classList.toggle("is-open", on);
+  });
+  document.querySelector(".nav-curtain")?.classList.toggle("is-on", !!open);
+  syncDropdownAria();
+}
+
 function initDropdowns() {
-  document.querySelectorAll(".dropdown-toggle").forEach((toggle) => {
+  const nav = document.querySelector(".nav");
+  const canHover = window.matchMedia("(hover: hover) and (pointer: fine)");
+  let closeTimer = 0;
+  const cancelClose = () => clearTimeout(closeTimer);
+
+  document.querySelectorAll(".dropdown").forEach((dd) => {
+    const toggle = dd.querySelector(".dropdown-toggle");
     toggle.addEventListener("click", (e) => {
       e.stopPropagation();
-      const dd = toggle.closest(".dropdown");
-      const wasOpen = dd.classList.contains("is-open");
-      document.querySelectorAll(".dropdown.is-open").forEach((d) =>
-        d.classList.remove("is-open")
-      );
-      dd.classList.toggle("is-open", !wasOpen);
-      syncDropdownAria();
+      // With a mouse the panel is already open from hover: a click keeps it
+      // open instead of flickering it shut.
+      const keep = canHover.matches && e.detail > 0;
+      setDropdown(dd.classList.contains("is-open") && !keep ? null : dd);
+    });
+    dd.addEventListener("pointerenter", () => {
+      if (!canHover.matches) return;
+      cancelClose();
+      setDropdown(dd);
+    });
+    // Clicks inside the panel's padding shouldn't count as "outside".
+    dd.querySelector(".dropdown-menu").addEventListener("click", (e) => {
+      if (!e.target.closest(".dropdown-item")) e.stopPropagation();
     });
   });
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".dropdown.is-open").forEach((d) =>
-      d.classList.remove("is-open")
+  if (nav) {
+    // Moving onto a plain nav word closes the panel; leaving the bar (and
+    // the panel, which is inside it) closes it after a moment, so crossing
+    // the gap between bar and panel doesn't.
+    nav.querySelectorAll(".nav__buttons > .nav__link, .nav__logo").forEach((el) =>
+      el.addEventListener("pointerenter", () => {
+        if (canHover.matches) { cancelClose(); setDropdown(null); }
+      })
     );
-    syncDropdownAria();
-  });
+    nav.addEventListener("pointerenter", cancelClose);
+    nav.addEventListener("pointerleave", () => {
+      if (!canHover.matches) return;
+      cancelClose();
+      closeTimer = setTimeout(() => setDropdown(null), 220);
+    });
+  }
+  document.addEventListener("click", () => setDropdown(null));
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    document.querySelectorAll(".dropdown.is-open").forEach((d) =>
-      d.classList.remove("is-open")
-    );
-    syncDropdownAria();
-    const nav = document.querySelector(".nav.is-open");
-    if (nav) {
-      nav.classList.remove("is-open");
-      nav.querySelector(".nav__burger")?.setAttribute("aria-expanded", "false");
+    setDropdown(null);
+    const open = document.querySelector(".nav.is-open");
+    if (open) {
+      open.classList.remove("is-open");
+      open.querySelector(".nav__burger")?.setAttribute("aria-expanded", "false");
     }
   });
 }
@@ -586,11 +1023,53 @@ function initDropdowns() {
    (ported from index.js)
    ========================================================= */
 
+/* projectimages/<dir>/<name>.<ext> -> projectimages/thumbs/<dir>/<name>.webp
+   (generated offline; see CONTENT-UPDATE-CHECKLIST.md "RAM"). Non-matching
+   paths pass through unchanged. */
+function thumbFor(src) {
+  return src.startsWith("projectimages/")
+    ? "projectimages/thumbs/" + src.slice("projectimages/".length).replace(/\.[^./]+$/, ".webp")
+    : src;
+}
+
+/* Each Featured page (section[data-featured]) ends with the other projects.
+   Rather than write them several times, copy them in from the All Projects
+   page: every child of #projects-all except [data-all-only] and the tile for
+   the page's own project (data-project === data-featured). The copies are
+   laid out three across; full-width tiles stay full width. Must run before
+   the images, glass and nav are wired up, so the copies get all three. */
+function cloneOtherProjects() {
+  const from = document.getElementById("projects-all");
+  if (!from) return;
+  document.querySelectorAll("section[data-featured]").forEach((to) => {
+    for (const el of from.children) {
+      if (el.hasAttribute("data-all-only")) continue;
+      if (el.dataset.project && el.dataset.project === to.dataset.featured) continue;
+      const copy = el.cloneNode(true);
+      if (copy.style.getPropertyValue("--w")) {
+        copy.style.setProperty("--w", "4");
+        copy.style.removeProperty("--wm");
+      }
+      to.appendChild(copy);
+    }
+  });
+}
+
+/* projectimages/<dir>/<name>.<ext> -> projectimages/web/<dir>/<name>.webp:
+   the gallery-sized copy (long side <= 1600px WebP, a fraction of the
+   original's bytes). Same generator and same fallback rule as thumbFor. */
+function webFor(src) {
+  return src.startsWith("projectimages/") && !src.startsWith("projectimages/web/")
+    ? "projectimages/web/" + src.slice("projectimages/".length).replace(/\.[^./]+$/, ".webp")
+    : src;
+}
+
 /* Turn any .bubble[data-images] into a "text | thumbnail" row. Multi-image
    docks get a "View all images" button → carousel; single-image docks open the
-   image when their thumbnail is clicked. */
+   image when their thumbnail is clicked. A .free-media[data-images] gets the
+   same thumbnail on its own (no tile, no text wrapper). */
 function renderProjectImages() {
-  document.querySelectorAll(".bubble[data-images]").forEach((bubble) => {
+  document.querySelectorAll(".bubble[data-images], .free-media[data-images]").forEach((bubble) => {
     if (bubble.querySelector(".project-image-container")) return; // already built
     let images;
     try {
@@ -600,18 +1079,26 @@ function renderProjectImages() {
     }
     if (!Array.isArray(images) || images.length === 0) return;
 
-    // Wrap the existing text so it's a single flex child beside the image.
-    const text = document.createElement("div");
-    text.className = "bubble__text";
-    while (bubble.firstChild) text.appendChild(bubble.firstChild);
-    bubble.appendChild(text);
+    const isTile = bubble.classList.contains("bubble");
 
-    // Square thumbnail (first image).
+    // Wrap the existing text so it's a single flex child beside the image.
+    if (isTile) {
+      const text = document.createElement("div");
+      text.className = "bubble__text";
+      while (bubble.firstChild) text.appendChild(bubble.firstChild);
+      bubble.appendChild(text);
+    }
+
+    // Square thumbnail (first image). RAM: a thumbnail draws at 150–300px but
+    // would decode the full 2000px original (~12MB of pixels), so it uses the
+    // 640px WebP from projectimages/thumbs/ (same path, .webp) and falls back
+    // to the original if the thumb is missing. The gallery keeps the originals.
     const figure = document.createElement("div");
     figure.className = "project-image-container";
     const img = document.createElement("img");
-    img.src = images[0];
-    img.alt = "Project image";
+    img.src = thumbFor(images[0]);
+    img.onerror = () => { img.onerror = null; img.src = images[0]; };
+    img.alt = bubble.dataset.alt || "Project image";
     img.loading = "lazy";
     img.decoding = "async"; // decode off the main thread — no scroll jank
     figure.appendChild(img);
@@ -632,7 +1119,7 @@ function renderProjectImages() {
     }
 
     bubble.appendChild(figure);
-    bubble.classList.add("has-image");
+    if (isTile) bubble.classList.add("has-image");
   });
 }
 
@@ -684,7 +1171,10 @@ function createGalleryModal(images, startIndex = 0, originEl = null) {
     slide.className = "gallery-modal-slide";
     const im = document.createElement("img");
     im.className = "gallery-modal-image";
-    im.src = src;
+    // RAM: no src yet. show() assigns it only to covers in the fan (centre
+    // ± 4), so a 12-image gallery decodes 5 full-size images at open instead
+    // of 12; the rest load as they step into the fan and then stay loaded.
+    im.dataset.src = src;
     im.alt = `Image ${k + 1} of ${images.length}`;
     im.decoding = "async";
     im.draggable = false;
@@ -722,6 +1212,15 @@ function createGalleryModal(images, startIndex = 0, originEl = null) {
       const pos = k - i;
       s.dataset.pos = Math.abs(pos) > 4 ? (pos < 0 ? "far-left" : "far-right") : String(pos);
       s.classList.toggle("is-current", pos === 0);
+      // Lazy-load the fan (see the slide builder above). Once loaded, keep it.
+      if (Math.abs(pos) <= 4) {
+        const im = s.firstElementChild;
+        if (im && !im.src) {
+          // Web-sized copy first; the original only if that copy is missing.
+          im.onerror = () => { im.onerror = null; im.src = im.dataset.src; };
+          im.src = webFor(im.dataset.src);
+        }
+      }
       // Only the centre image is "the" image for assistive tech.
       s.setAttribute("aria-hidden", pos === 0 ? "false" : "true");
     });
@@ -858,13 +1357,13 @@ window.createGalleryModal = createGalleryModal;
 
 /* Randomise the lava on each load: every blob's position + motion, plus the
    colour phase. The colour phase is one shared --color-delay (a negative delay
-   that seeks into the 120s cycle), so blobs + nav-button glow start on the SAME
+   that seeks into the 240s cycle), so blobs + nav-button glow start on the SAME
    random hue and stay in sync. Kept within the established slow/large ranges. */
 function randomizeLava() {
   const rand = (min, max) => min + Math.random() * (max - min);
   document.documentElement.style.setProperty(
     "--color-delay",
-    `${(-rand(0, 120)).toFixed(1)}s`
+    `${(-rand(0, 240)).toFixed(1)}s`
   );
   document.querySelectorAll(".lava__blob").forEach((blob) => {
     const dir = Math.random() < 0.5 ? 1 : -1;
@@ -874,8 +1373,8 @@ function randomizeLava() {
     blob.style.setProperty("--up", `${-Math.round(rand(28, 46))}vh`);
     blob.style.setProperty("--down", `${Math.round(rand(24, 40))}vh`);
     blob.style.setProperty("--hx", `${dir * Math.round(rand(6, 11))}vw`);
-    blob.style.setProperty("--d", `${Math.round(rand(400, 520))}s`);
-    blob.style.setProperty("--delay", `${-Math.round(rand(0, 240))}s`);
+    blob.style.setProperty("--d", `${Math.round(rand(600, 780))}s`);
+    blob.style.setProperty("--delay", `${-Math.round(rand(0, 360))}s`);
   });
 }
 
@@ -986,6 +1485,7 @@ function initA11y() {
 }
 
 randomizeLava();
+cloneOtherProjects();
 renderProjectImages();
 initA11y();
 if (!a11yOn()) ensureGlass();
@@ -993,5 +1493,8 @@ initNav();
 initDropdowns();
 initMobileNav();
 initDownloads();
-showSection("objective"); // default page
+initResearchStory();
+initShowcases();
+initTilt();
+showSection("about"); // default page
 

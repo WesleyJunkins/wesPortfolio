@@ -11,7 +11,11 @@
      The refraction is built per-element by index.js; these tokens are the
      tint / specular rim / shadow that read the same on every surface, plus
      the blur/saturate FALLBACK for Safari/Firefox. */
-  --lg-frost: 0.05;                          /* faint glass tint opacity */
+  --lg-frost: 0.07;                          /* faint glass tint opacity (was 0.05; a touch more frost) */
+  /* How bright the lava field is behind the glass. 1 = the original full-strength
+     colour; lower = darker, so text in the docks competes with less colour.
+     Compositor-only (opacity), so no GPU cost. */
+  --lava-dim: 0.48;
   --lg-tint: rgba(255, 255, 255, 0.055);
   --lg-tint-hover: rgba(255, 255, 255, 0.10);
   --lg-shadow:
@@ -47,6 +51,9 @@ body {
   min-height: 100vh;
   background: #000;
   font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* 500 (medium) rather than the 400 default: all body copy reads a touch
+     thicker over the lava. Headings/buttons set their own heavier weights. */
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.92);
   overflow-x: hidden;
 }
@@ -64,6 +71,8 @@ body {
   z-index: -1;
   pointer-events: none;
   overflow: hidden;
+  /* Dim the whole field toward the black body behind it (see --lava-dim). */
+  opacity: var(--lava-dim, 1);
 }
 
 /* PERF: the goo lives on this HALF-resolution inner field, upscaled 2x by a
@@ -96,12 +105,12 @@ body {
 @property --c1 {
   syntax: "<color>";
   inherits: false;
-  initial-value: #b65573;
+  initial-value: #18a653;
 }
 @property --c2 {
   syntax: "<color>";
   inherits: false;
-  initial-value: #7a1f3a;
+  initial-value: #065725;
 }
 
 .lava__blob {
@@ -126,7 +135,7 @@ body {
        one colour that very slowly drifts through the palette. */
   animation:
     lava-drift var(--d, 30s) ease-in-out var(--delay, 0s) infinite,
-    lava-color 120s linear var(--color-delay, 0s) infinite;
+    lava-color 240s linear var(--color-delay, 0s) infinite;
   will-change: transform;
 }
 
@@ -157,33 +166,67 @@ body {
 }
 
 /* Shared by every blob with NO per-blob delay, so the field is one colour at
-   any instant. linear timing + 120s = a continuous, very slow drift between
-   these deep/muted hues (no resting on a colour, no abrupt change). */
+   any instant. linear timing + 240s = a continuous, very slow drift (no
+   resting on a colour, no abrupt change).
+
+   PALETTE: tuned for --lava-dim: 0.48. The field is shown at about half
+   strength over black, so these source colours are deliberately bright and
+   saturated: what reaches the screen is a deep jewel tone, not the vivid hex
+   written here. Each stop was solved so that AFTER dimming it lands at the
+   same perceived lightness (OKLCH L 0.38 for --c1, 0.25 for --c2) with close
+   to the most colour that brightness allows, so no hue looks darker or
+   greyer than its neighbours.
+   ORDER: out and back (emerald → blues → violets → ember, then home by a
+   slightly different route) instead of once round the colour wheel. Dark
+   yellow and olive are the muddy part of the wheel at this brightness, and
+   neighbouring stops are close in hue so the blend between them stays clean.
+   If --lava-dim changes much, the palette should be re-solved for it.
+   lava-now (below) repeats the --c1 column and must be kept in step. */
 @keyframes lava-color {
   0%,
-  100% {
-    --c1: #b65573;
-    --c2: #7a1f3a;
+  100% { /* emerald */
+    --c1: #18a653;
+    --c2: #065725;
   }
-  20% {
-    --c1: #b3803a;
-    --c2: #7a4012;
+  10% { /* azure */
+    --c1: #1797cc;
+    --c2: #064e6d;
   }
-  40% {
-    --c1: #3f9a7c;
-    --c2: #176048;
+  20% { /* blue */
+    --c1: #4a85f7;
+    --c2: #083ca7;
   }
-  60% {
-    --c1: #3f72ab;
-    --c2: #1a386e;
+  30% { /* violet */
+    --c1: #a75ef7;
+    --c2: #5c2096;
   }
-  80% {
-    --c1: #7d4f9c;
-    --c2: #401f63;
+  40% { /* magenta */
+    --c1: #e041b0;
+    --c2: #820861;
+  }
+  50% { /* ember */
+    --c1: #eb5212;
+    --c2: #802405;
+  }
+  60% { /* rose */
+    --c1: #f23877;
+    --c2: #8b0839;
+  }
+  70% { /* purple */
+    --c1: #c151e2;
+    --c2: #6d1684;
+  }
+  80% { /* indigo */
+    --c1: #6c7cf7;
+    --c2: #2f32a7;
+  }
+  90% { /* teal */
+    --c1: #18a097;
+    --c2: #06534d;
   }
 }
 
-/* ---- Live glow colour: --lava-now tracks the CURRENT lava colour (same 120s
+/* ---- Live glow colour: --lava-now tracks the CURRENT lava colour (same 240s
    cycle as lava-color, no delay → in sync). Animated on .nav ONLY (a tiny
    subtree) and inherited down to the nav buttons / dropdown items. DO NOT
    animate an inherited custom property on <html>/<body>: it invalidates style
@@ -198,11 +241,46 @@ body {
 }
 @keyframes lava-now {
   0%,
-  100% { --lava-now: #b65573; }
-  20% { --lava-now: #b3803a; }
-  40% { --lava-now: #3f9a7c; }
-  60% { --lava-now: #3f72ab; }
-  80% { --lava-now: #7d4f9c; }
+  100% { --lava-now: #18a653; }
+  10% { --lava-now: #1797cc; }
+  20% { --lava-now: #4a85f7; }
+  30% { --lava-now: #a75ef7; }
+  40% { --lava-now: #e041b0; }
+  50% { --lava-now: #eb5212; }
+  60% { --lava-now: #f23877; }
+  70% { --lava-now: #c151e2; }
+  80% { --lava-now: #6c7cf7; }
+  90% { --lava-now: #18a097; }
+}
+
+/* ---- Lamp glow: a faint, wide pool of the current lava colour along the
+   bottom-centre edge, like the bulb at the base of a lava lamp. A sibling of
+   .lava__field (so the goo filter can't threshold it) and inside .lava, so
+   --lava-dim dims it with the rest of the field and a11y mode hides it too.
+   Animates lava-now on ITSELF: a leaf element with no descendants, so the
+   per-frame style invalidation the note above warns about stays contained
+   (same --color-delay seed, so it is always the blobs' current hue).
+   Tune: width/height for the spread, --glow for the strength. ---- */
+.lava__glow {
+  --glow: 0.85;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 110vw;
+  height: 52vh;
+  /* Centre the ellipse on the bottom edge so only its top half shows. */
+  transform: translate(-50%, 50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--lava-now) 0%,
+    color-mix(in srgb, var(--lava-now) 55%, transparent) 45%,
+    transparent 100%
+  );
+  opacity: var(--glow);
+  animation: lava-now 240s linear var(--color-delay, 0s) infinite;
+  pointer-events: none;
+  will-change: transform; /* own layer: the colour repaint stays on this element */
 }
 
 /* The ambient lava + nav glow are intentionally kept animating on ALL devices
@@ -214,13 +292,66 @@ body {
    CONTENT — one section ("page") visible at a time
    --------------------------------------------------------- */
 main {
-  max-width: 1120px;
+  /* Exposed so a full-bleed page (the Research story) can cancel them. */
+  --main-top: 104px;
+  --main-bottom: 56px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 104px 1rem 56px; /* clear the fixed nav at the top */
+  padding: var(--main-top) 1rem var(--main-bottom); /* clear the fixed nav at the top */
 }
 
 section { display: none; }
-section.is-active { display: block; }
+
+/* ---- Page layout grid ---------------------------------------------------
+   Every page (section) is a 12-column grid. Each direct child is placed by
+   custom properties set inline on the element:
+
+     --w   columns to span (1-12). Default 12 = full width.
+     --h   rows to span. Default 1. A tall tile beside two short ones is
+           --h:2 on the tall one.
+     --col column to start at (1-12). Default auto = next free slot.
+     --wm / --hm   the same spans for the mid breakpoint (721-1000px).
+           Default there is full width, so only set --wm to keep a tile
+           side-by-side on tablets.
+
+   e.g. <div class="bubble" style="--w:8; --h:2">   wide, two rows tall
+        <div class="bubble" style="--w:4">          sits to its right
+        <div class="free"   style="--w:6; --col:4"> un-tiled, centred
+
+   Children fill the grid in source order (no dense packing), so the visual
+   order always matches the reading / tab order. Tiles in a row stretch to
+   the same height. At <=720px everything is one column.
+
+   Two kinds of child:
+     .bubble  a glass content tile
+     .free    content with NO tile, sitting straight on the backdrop
+              (see "FREE CONTENT" below). .page-title is also un-tiled.
+   ------------------------------------------------------------------------ */
+section.is-active {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--page-gap, 1.25rem);
+}
+section > * {
+  grid-column: var(--col, auto) / span var(--w, 12);
+  grid-row: span var(--h, 1);
+  min-width: 0;
+}
+/* The Research page is a full-bleed scroll story, not a grid. */
+#research.is-active { display: block; }
+
+@media (max-width: 1000px) {
+  section > * {
+    grid-column: auto / span var(--wm, 12);
+    grid-row: span var(--hm, 1);
+  }
+}
+@media (max-width: 720px) {
+  section > * {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
 
 .page-title {
   text-align: center;
@@ -228,7 +359,7 @@ section.is-active { display: block; }
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.25rem; /* the grid gap supplies the rest */
   color: rgba(255, 255, 255, 0.42);
 }
 
@@ -236,13 +367,12 @@ section.is-active { display: block; }
    surface rule; this is layout + typography only. ---- */
 .bubble {
   width: 100%;
-  margin: 0 auto 1.5rem;
+  margin: 0;                 /* spacing comes from the page grid's gap */
   padding: 1.75rem 2rem;
   border-radius: 28px;       /* dock corner; the engine reads this for the map */
   text-align: left;
   color: rgba(255, 255, 255, 0.9);
 }
-.bubble:last-child { margin-bottom: 0; }
 
 .bubble h3 {
   margin: 0 0 0.35rem;
@@ -253,7 +383,7 @@ section.is-active { display: block; }
 .bubble h4 {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 650; /* variable fonts (SF Pro) render this; others round to 700 */
   color: rgba(255, 255, 255, 0.6);
 }
 .bubble p {
@@ -265,6 +395,14 @@ section.is-active { display: block; }
 .bubble p:last-child { margin-bottom: 0; }
 .bubble a { color: #79c0ff; text-decoration: none; font-weight: 600; }
 .bubble a:hover { text-decoration: underline; }
+/* Divider between entries grouped inside one dock (e.g. "Earlier Honors"). */
+.bubble hr {
+  border: none;
+  height: 1px;
+  margin: 0.9rem 0 1rem;
+  background: rgba(255, 255, 255, 0.16);
+}
+html.a11y .bubble hr { background: rgba(255, 255, 255, 0.45); }
 
 /* Readability: a soft, blurred dark halo directly behind each line of text so
    it stays legible over the busy lava. Done as a text-shadow blur (it hugs each
@@ -279,6 +417,158 @@ section.is-active { display: block; }
     0 0 9px rgba(0, 0, 0, 0.75),
     0 1px 3px rgba(0, 0, 0, 0.8);
 }
+
+/* ---------------------------------------------------------
+   FLOATING TILES — opt-in per page with class="float-tiles" on the section.
+   Tiles look lifted off the page (deeper shadow) and, under a mouse, turn
+   slightly to face the cursor with a soft highlight following it.
+
+   The tilt uses the INDIVIDUAL `rotate` property, never `transform`: the
+   rise-in animation holds `transform` with fill-mode both, which would
+   override it, and `rotate` composes on top instead. The tilt (rotate) and
+   highlight position (--mx / --my) are set by initTilt().
+   Angles stay small because the glass refraction is sized from the tile's
+   flat box. Off in accessibility mode and on touch screens (no cursor).
+   --------------------------------------------------------- */
+.float-tiles { perspective: 1400px; }
+.float-tiles > .bubble {
+  position: relative; /* anchors the ::after highlight */
+  box-shadow:
+    var(--lg-shadow),
+    0 38px 70px -22px rgba(0, 0, 0, 0.7),
+    0 14px 28px -14px rgba(0, 0, 0, 0.5);
+  /* Slow settle when the cursor leaves; initTilt shortens it while tracking. */
+  transition: rotate 0.7s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  will-change: rotate;
+}
+.float-tiles > .bubble.is-tilting { transition-duration: 0.12s, 0.3s; }
+/* Highlight that follows the cursor across the tile. */
+.float-tiles > .bubble::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.13),
+    rgba(255, 255, 255, 0) 60%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.float-tiles > .bubble.is-tilting::after { opacity: 1; }
+html.a11y .float-tiles > .bubble { rotate: none !important; }
+html.a11y .float-tiles > .bubble::after { display: none; }
+
+/* ---------------------------------------------------------
+   FREE CONTENT — page content that is NOT in a tile
+   A .free block is a grid child like a tile (--w / --h / --col) but has no
+   glass, no background and no padding: its text sits straight on the
+   backdrop, kept legible by the same dark halo the tiles use. Building
+   blocks (all optional, mix freely inside one .free):
+
+     h1 / h2          big display heading
+     .free__kicker    small uppercase line (above or below a heading)
+     .free__lede      large intro paragraph
+     p                normal paragraph
+     .free--label     a slim section divider: text + a hairline rule
+     .free--center    centre the text
+     .free-media      a free image: add data-images='[...]' and index.js
+                      builds the thumbnail (click = gallery), no tile
+   --------------------------------------------------------- */
+.free {
+  align-self: center;
+  color: rgba(255, 255, 255, 0.92);
+  overflow-wrap: break-word;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(0, 0, 0, 0.8),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.free--center { text-align: center; }
+.free > :first-child { margin-top: 0; }
+.free > :last-child { margin-bottom: 0; }
+.free h1,
+.free h2 {
+  margin: 0 0 0.6rem;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+.free h1 { font-size: clamp(2.6rem, 6.4vw, 4.75rem); }
+/* A heading with the logo beside it (About page). The logo is sized in em,
+   so it always matches the height of the name. */
+.free h1.free__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+}
+.free__brand-logo {
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+.free h2 { font-size: clamp(1.8rem, 4vw, 2.75rem); }
+.free p {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.86);
+}
+.free p.free__kicker {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.66);
+}
+.free p.free__lede {
+  font-size: clamp(1.1rem, 1.9vw, 1.4rem);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+}
+.free a { color: #79c0ff; text-decoration: none; font-weight: 600; }
+.free a:hover { text-decoration: underline; }
+
+/* Slim divider between groups of tiles: LABEL ———————— */
+.free--label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+.free--label::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
+}
+
+/* Free image: the thumbnail frame on its own, no tile around it. */
+.free-media {
+  display: flex;
+  justify-content: center;
+}
+.free-media .project-image-container {
+  width: min(100%, var(--media-size, 300px));
+  border-radius: 28px;
+}
+
+html.a11y .free { text-shadow: none; }
+html.a11y .free p { color: #eef1f7; }
+html.a11y .free p.free__kicker,
+html.a11y .free--label { color: rgba(255, 255, 255, 0.78); }
+html.a11y .free--label::after { background: rgba(255, 255, 255, 0.45); }
+html.a11y .free a { color: #a7cbff; text-decoration: underline; }
 
 /* contact buttons inside the My Links dock */
 .link-buttons {
@@ -461,6 +751,22 @@ section.is-active { display: block; }
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 255, 255, 0.14);
 }
 
+/* Stacked variant for narrower tiles: the image becomes a wide banner across
+   the top of the tile with the text underneath. Add .bubble--stack to any
+   .bubble[data-images] that is too narrow for the side-by-side row. */
+.bubble--stack.has-image {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+.bubble--stack .bubble__text { flex: 0 1 auto; }
+.bubble--stack .project-image-container {
+  order: -1;
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+}
+
 @media (max-width: 720px) {
   .bubble.has-image {
     flex-direction: column;
@@ -500,7 +806,7 @@ section.is-active { display: block; }
 }
 .gallery-modal {
   position: relative;
-  max-width: min(96vw, 1280px);
+  max-width: min(96vw, 1500px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -520,15 +826,17 @@ section.is-active { display: block; }
    out, turn toward the centre, shrink and recede. Transitions on transform
    give the sliding/turning motion when the row moves. */
 .gallery-modal-stage {
-  --slide-w: min(58vw, 640px);
-  --slide-h: min(56vh, 480px);
-  --slide-h: min(56dvh, 480px);
-  --side-x: clamp(150px, 27vw, 340px);  /* first side cover's offset */
-  --side-step: clamp(40px, 5.5vw, 64px); /* each further cover */
+  /* Centre cover: ~1.5x the original 640x480 so images can actually be read.
+     Side offsets grow with it so the fan still shows beside the centre. */
+  --slide-w: min(72vw, 960px);
+  --slide-h: min(66vh, 720px);
+  --slide-h: min(66dvh, 720px);
+  --side-x: clamp(190px, 34vw, 480px);  /* first side cover's offset */
+  --side-step: clamp(44px, 6vw, 80px);  /* each further cover */
   --side-rot: 58deg;
   --side-scale: 0.78;
   position: relative;
-  width: min(96vw, 1280px);
+  width: min(96vw, 1500px);
   height: calc(var(--slide-h) + 56px); /* + room for the reflection */
   perspective: 1200px;
   perspective-origin: 50% 42%;
@@ -551,7 +859,6 @@ section.is-active { display: block; }
   cursor: pointer;
   transform-style: preserve-3d;
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
-  will-change: transform;
   /* The iTunes-style floor reflection (Chromium + Safari; ignored elsewhere). */
   -webkit-box-reflect: below 6px linear-gradient(transparent 74%, rgba(255, 255, 255, 0.22));
 }
@@ -575,6 +882,10 @@ section.is-active { display: block; }
   pointer-events: none;
 }
 .gallery-modal-slide.is-current { cursor: default; }
+/* RAM: only the covers in the fan (centre ± 4) get their own compositor
+   layer. The far covers are off to the sides and unloaded (index.js lazy
+   loads them), so a 12-image gallery no longer holds 12 full-size layers. */
+.gallery-modal-slide:not([data-pos^="far"]) { will-change: transform; }
 
 /* Positions. Right side turns toward the centre (negative rotateY), left
    side mirrors it. Nearer covers stack above farther ones. */
@@ -739,10 +1050,10 @@ section.is-active { display: block; }
   .gallery-modal { gap: 0.85rem; }
   /* Phones: a bigger centre cover, side covers tucked closer, fewer in view. */
   .gallery-modal-stage {
-    --slide-w: min(74vw, 640px);
-    --slide-h: min(46vh, 480px);
-    --slide-h: min(46dvh, 480px); /* leave room for the control pill + close button */
-    --side-x: 32vw;
+    --slide-w: min(86vw, 960px);
+    --slide-h: min(52vh, 720px);
+    --slide-h: min(52dvh, 720px); /* leave room for the control pill + close button */
+    --side-x: 40vw;
     --side-step: 7vw;
     --side-rot: 62deg;
     --side-scale: 0.7;
@@ -759,72 +1070,589 @@ section.is-active { display: block; }
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-section.is-active .bubble {
+section.is-active .bubble,
+section.is-active .free {
   animation: riseIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ---------------------------------------------------------
+   RESEARCH OVERVIEW — scroll story (markup in #research; index.js
+   initResearchStory). .story is a tall scroller; .story__stage sticks to the
+   viewport for its whole height, and the scroll progress through .story
+   (0 → 1) scrubs a paused Web Animations timeline that index.js builds from
+   the stage's size: orbs emerge from behind their parents, lines draw with a
+   dash-offset sweep, cards rise in and out. CSS here is layout + looks only;
+   every position and timing lives in index.js (slots P + timeline T).
+   Orbs are glass surfaces (shared surface rule + LiquidGlass.apply). Motion
+   is translate + opacity ONLY: the engine sizes each refraction map from
+   getBoundingClientRect, so a scale transform would bake a wrong-sized map.
+   --------------------------------------------------------- */
+.story {
+  --beats: 7;               /* ~90vh of scrolling per beat */
+  --o-root: 150px;
+  --o-child: 130px;
+  --o-leaf: 118px;
+  position: relative;
+  height: calc(var(--beats) * 90vh);
+  /* Full-bleed vertically: cancel main's nav clearance and bottom padding so
+     the stage fills the viewport from the first pixel (the "Scroll" cue is in
+     view on arrival) and the story ends exactly at the bottom of the page. */
+  margin-top: calc(-1 * var(--main-top, 104px));
+  margin-bottom: calc(-1 * var(--main-bottom, 56px));
+}
+.story__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+/* Float-in on each visit (index.js restarts it). */
+@keyframes storyIn {
+  from { opacity: 0; transform: translateY(36px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.orb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: #ffffff;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 9px rgba(0, 0, 0, 0.75),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+  -webkit-user-select: none;
+  user-select: none;
+}
+.story__orb {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%); /* index.js composes its offsets after this */
+}
+.orb--root  { width: var(--o-root);  height: var(--o-root);  z-index: 6; font-size: 1.04rem; }
+.orb--child { width: var(--o-child); height: var(--o-child); z-index: 5; }
+.orb--leaf  { width: var(--o-leaf);  height: var(--o-leaf);  z-index: 4; }
+
+.story__card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: 3;
+  width: min(720px, 92vw);
+  margin: 0;
+  transform: translate(-50%, 0);
+}
+.story__lines {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.story__lines path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.62);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+}
+.story__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 5vh;
+  z-index: 2;
+  transform: translateX(-50%);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.story__hint::after {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 0.55rem auto 0;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  animation: hintBob 1.6s ease-in-out infinite;
+}
+@keyframes hintBob {
+  0%, 100% { transform: translateY(0) rotate(45deg); }
+  50%      { transform: translateY(6px) rotate(45deg); }
+}
+@media (max-height: 760px) {
+  .story { --o-root: 128px; --o-child: 112px; --o-leaf: 102px; }
+  .story__card p { font-size: 0.94rem; }
+  .orb { font-size: 0.9rem; }
+  .orb--root { font-size: 0.96rem; }
+}
+@media (max-width: 720px) {
+  .story { --o-root: 124px; --o-child: 106px; --o-leaf: 96px; }
+  .orb { font-size: 0.84rem; padding: 0 0.7rem; }
+  .orb--root { font-size: 0.9rem; }
+  .story__card { width: calc(100vw - 32px); }
+}
+/* Accessibility mode: no scrubbing — the same content as a plain column.
+   !important beats the (cancelled anyway) inline animations. */
+html.a11y .story { height: auto; }
+html.a11y .story__stage {
+  position: static;
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+html.a11y .story__orb,
+html.a11y .story__card {
+  position: static;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html.a11y .story__card { width: 100%; }
+html.a11y .story__lines,
+html.a11y .story__hint { display: none; }
+
+/* ---------------------------------------------------------
+   SHOWCASE — pinned scroll presentation (markup: .showcase in index.html;
+   engine: initShowcases in index.js). Like the Research story, the tall
+   .showcase gives the scroll distance and .showcase__stage sticks to the
+   viewport; unlike it, all timing lives in the markup (data-in / data-out /
+   data-fx / data-count), so new showcases need no JS.
+
+   Every direct child of the stage is centred in the SAME grid cell, stacked.
+   What is visible at any moment is decided purely by the scroll timeline.
+   Glass tiles (.bubble) may only use rise / fade: the refraction map is
+   sized from the element's box, so a scale (zoom / grow) would distort it.
+   --------------------------------------------------------- */
+.showcase {
+  --beats: 7;                /* ~one screen of scrolling per beat */
+  position: relative;
+  height: calc(var(--beats) * 85vh);
+  /* Full-bleed: break out of main's max-width and cancel its nav clearance
+     so the stage is the whole viewport. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: calc(-1 * var(--main-top, 104px));
+  margin-bottom: 1.5rem;
+}
+.showcase__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.showcase__stage > * { grid-area: 1 / 1; }
+
+/* The picture frame. Width is capped by the viewport height too, so the
+   whole frame always fits on screen under the nav. */
+.showcase__media {
+  --ratio: 2.047;            /* width / height of the images (1912 x 934) */
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  width: min(94vw, calc(74vh * var(--ratio)), 1600px);
+  aspect-ratio: var(--ratio);
+  border-radius: 32px;
+  overflow: hidden;
+  background: #0b0d14;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.14);
+  will-change: transform;
+}
+.showcase__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Darkens the picture so text set over it stays readable. */
+.showcase__scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.42));
+}
+
+/* A layer of text, centred on the stage above the picture. */
+.showcase__layer {
+  position: relative;
+  z-index: 2;
+  width: min(90vw, 1000px);
+  text-align: center;
+  color: #ffffff;
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(0, 0, 0, 0.75),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.showcase__layer p,
+.showcase__layer h2 { margin: 0; }
+.showcase__eyebrow {
+  font-size: clamp(0.78rem, 1.3vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+.showcase__layer .showcase__title {
+  margin: 0.6rem 0 0.9rem;
+  font-size: clamp(4rem, 17vw, 13rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+.showcase__sub {
+  font-size: clamp(1.1rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.86);
+}
+.showcase__statement {
+  font-size: clamp(1.7rem, 4.8vw, 4rem);
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.showcase__list {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  font-size: clamp(1.7rem, 4.8vw, 4rem);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Closing layer: big numbers, then a glass summary tile under them. */
+.showcase__layer--end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.5rem, 5vh, 3.25rem);
+}
+.showcase__stats {
+  display: flex;
+  justify-content: center;
+  gap: clamp(1.25rem, 5vw, 4.5rem);
+  width: 100%;
+}
+.showcase__stat {
+  flex: 1 1 0;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.showcase__num {
+  font-size: clamp(3.5rem, 11vw, 8rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.showcase__label {
+  font-size: clamp(0.82rem, 1.25vw, 1rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.76);
+}
+.showcase__card {
+  width: min(100%, 760px);
+  text-align: left;
+}
+
+/* Long titles ("Brain-Drone Race") need a smaller size than a short one. */
+.showcase__layer .showcase__title--long {
+  font-size: clamp(2.8rem, 10.5vw, 8.5rem);
+  line-height: 1;
+}
+/* Sentence-length list items (process steps) instead of two-word ones. */
+.showcase__list--steps {
+  display: grid;
+  gap: 0.9rem;
+  font-size: clamp(1.25rem, 3vw, 2.5rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+/* A text layer that leaves room on both sides for cut-outs. */
+.showcase__layer--narrow { width: min(34vw, 460px); }
+
+/* Background-less images (.showcase__cutout stays put once it arrives;
+   .showcase__racer flies across). Where they rest is set with the individual
+   `translate` property, which stacks with the `transform` the timeline
+   animates. Most of this hardware is black, so each sits on a soft pool of
+   light or it would vanish into the dark backdrop. */
+.showcase__cutout,
+.showcase__racer {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  will-change: transform;
+}
+.showcase__cutout::before,
+.showcase__racer::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1) 55%, rgba(255, 255, 255, 0) 100%);
+}
+.showcase__cutout img,
+.showcase__racer img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.55));
+}
+.showcase__cutout figcaption,
+.showcase__racer figcaption {
+  font-size: clamp(0.78rem, 1.2vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.showcase__cutout { width: clamp(180px, 26vw, 400px); }
+.showcase__cutout--a { translate: -30vw 0; }
+.showcase__cutout--b { translate: 30vw 0; }
+/* Race lanes: one above the text, one below. */
+.showcase__racer { width: clamp(130px, 19vw, 280px); }
+.showcase__racer img { rotate: -5deg; } /* nose down: leaning into the run */
+.showcase__racer--a { translate: 0 -25vh; }
+.showcase__racer--b { translate: 0 25vh; }
+
+/* A row of big years, arriving one at a time. */
+.showcase__years {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 clamp(1rem, 4vw, 3.5rem);
+  margin-top: 1rem;
+  font-size: clamp(2.4rem, 8vw, 6.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+/* A summary tile that sits in a layer of its own. */
+.showcase__layer > .showcase__card { margin: 0 auto; }
+
+@media (max-width: 720px) {
+  /* Portrait phones: a taller crop of the picture so it has presence. */
+  .showcase__media {
+    width: 92vw;
+    aspect-ratio: 4 / 5;
+    max-height: 72vh;
+    border-radius: 24px;
+  }
+  .showcase__stats { gap: 0.75rem; }
+  /* No room beside the text: cut-outs go above and below it instead. */
+  .showcase__layer--narrow { width: 90vw; }
+  .showcase__cutout { width: min(54vw, 30vh); }
+  .showcase__cutout--a { translate: 0 -29vh; }
+  .showcase__cutout--b { translate: 0 29vh; }
+  .showcase__racer { width: min(40vw, 22vh); }
+  .showcase__racer--a { translate: 0 -27vh; }
+  .showcase__racer--b { translate: 0 27vh; }
+  .showcase__years { gap: 0 1.25rem; }
+}
+
+/* Accessibility mode: no pinning or scrubbing, the same content in a column. */
+html.a11y .showcase {
+  height: auto;
+  width: auto;
+  margin: 0;
+}
+html.a11y .showcase__stage {
+  position: static;
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+html.a11y .showcase__layer { order: 1; text-shadow: none; }
+html.a11y .showcase__layer:first-of-type { order: -1; } /* title above the pictures */
+html.a11y .showcase__media {
+  order: 0;
+  width: 100%;
+  aspect-ratio: auto;
+  display: grid;
+  gap: 1rem;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+html.a11y .showcase__media img { position: static; height: auto; }
+html.a11y .showcase__cutout,
+html.a11y .showcase__racer { order: 1; translate: none; width: min(60vw, 280px); }
+html.a11y .showcase__racer img { rotate: none; }
+html.a11y .showcase__layer--narrow { width: min(90vw, 1000px); }
+html.a11y .showcase__scrim,
+html.a11y .showcase .story__hint { display: none; }
+
+/* ---------------------------------------------------------
    NAV DROPDOWNS (Résumé / Research)
    --------------------------------------------------------- */
-.dropdown { position: relative; display: inline-flex; }
+/* Apple-style flyout: instead of a small menu hanging off its button, a wide
+   panel opens under the whole nav bar while the page behind dims and blurs
+   (.nav-curtain). The panel is close to opaque, so the links never have to
+   compete with the lava: a small grey label, then large bold links, lined up
+   under the nav word that opened it (--menu-x, set by index.js).
+
+   .dropdown is position:static on purpose, so the panel positions against
+   the (fixed) .nav and can span its full width. The panel is NOT glassified
+   by the refraction engine. */
+.dropdown { position: static; display: inline-flex; }
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
+  left: 0;
   right: 0;
-  min-width: 200px;
-  padding: 0.4rem;
+  z-index: 10000;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  border-radius: 18px;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 1.75rem 2rem 2rem var(--menu-x, 2rem);
+  border-radius: 28px;
+  color: #ffffff;
+  background: rgba(18, 19, 26, 0.94);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-6px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-  z-index: 10000;
+  transform: translateY(-10px);
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.25s;
 }
 .dropdown.is-open .dropdown-menu {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: none;
 }
 
-/* Browsers without the url() refraction (Safari / Firefox — index.js only adds
-   .lg-refract on <html> in Chromium): the shared 5%-white tint + 2px frost is
-   near-invisible on a floating menu over the lava, so the item text was
-   unreadable. Give the menu a real frosted pane instead: dark tint + heavy
-   blur (same family as the solid mobile panel). Beats the shared surface rule
-   below on specificity. */
-html:not(.lg-refract) .dropdown-menu {
-  background: rgba(16, 18, 28, 0.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
+/* Small grey heading above the links ("Projects", "CV"). */
+.dropdown-label {
+  margin: 0 0 0.6rem;
+  padding: 0 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.52);
 }
+
+/* A second group inside the same panel gets some air above it. */
+.dropdown-item + .dropdown-label { margin-top: 1.1rem; }
 
 .dropdown-item {
   appearance: none;
   border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.9);
+  background: none;
+  padding: 0.28rem 0.8rem;
+  font: inherit;
+  font-size: clamp(1.35rem, 2.1vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   text-align: left;
   white-space: nowrap;
-  padding: 0.5rem 0.85rem;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  transition: background 0.2s ease;
+  /* Each link drifts in a beat after the panel (staggered below). */
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, color 0.15s ease;
 }
-.dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.10);
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--lava-now) 55%, transparent);
+.dropdown.is-open .dropdown-item {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), color 0.15s ease;
 }
-/* Active sub-page indicator: a faint lava tint, NOT a glow. The selected glow
-   lives on the parent Résumé / Research toggle (top level), per the request. */
-.dropdown-item.is-active {
-  background: color-mix(in srgb, var(--lava-now) 16%, transparent);
+.dropdown.is-open .dropdown-item:nth-of-type(1) { transition-delay: 0.06s, 0.06s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(2) { transition-delay: 0.10s, 0.10s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(3) { transition-delay: 0.14s, 0.14s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(4) { transition-delay: 0.18s, 0.18s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(n + 5) { transition-delay: 0.22s, 0.22s, 0s; }
+
+/* While the pointer is over the list, the other links step back so the one
+   under the pointer stands out. */
+.dropdown-menu:hover .dropdown-item { color: rgba(255, 255, 255, 0.55); }
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus-visible { color: #ffffff; }
+/* The page you are on: marked with the live lava colour. */
+.dropdown-menu .dropdown-item.is-active {
+  color: color-mix(in srgb, var(--lava-now) 55%, #ffffff);
 }
+
+/* The dimmed, blurred page behind an open flyout. Sits just under the nav;
+   it also catches the click that closes the flyout. */
+.nav-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+.nav-curtain.is-on {
+  opacity: 1;
+  visibility: visible;
+}
+html.a11y .nav-curtain {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: rgba(0, 0, 0, 0.7);
+}
+html.a11y .dropdown-item,
+html.a11y .dropdown-menu:hover .dropdown-item,
+html.a11y .dropdown-menu .dropdown-item.is-active {
+  opacity: 1;
+  transform: none;
+  color: #ffffff;
+}
+/* The nav word whose panel is open stays lit. */
+.dropdown.is-open .dropdown-toggle { color: #ffffff; }
 
 /* ---------------------------------------------------------
    THE GLASS COMPONENT
@@ -896,7 +1724,7 @@ html:not(.lg-refract) .dropdown-menu {
 .nav,
 .btn,
 .bubble,
-.dropdown-menu,
+.orb,
 .gallery-modal-nav,
 .gallery-modal-close {
   color: rgba(255, 255, 255, 0.92);
@@ -915,7 +1743,7 @@ html:not(.lg-refract) .dropdown-menu {
 html:not(.lg-refract) .nav,
 html:not(.lg-refract) .btn,
 html:not(.lg-refract) .bubble,
-html:not(.lg-refract) .dropdown-menu,
+html:not(.lg-refract) .orb,
 html:not(.lg-refract) .gallery-modal-nav,
 html:not(.lg-refract) .gallery-modal-close,
 html:not(.lg-refract) .a11y-toggle {
@@ -927,8 +1755,10 @@ html:not(.lg-refract) .a11y-toggle {
    is the Safari / off-screen fallback; tint + bloom (--lg-shadow) come from the
    shared rule above. */
 .bubble {
-  -webkit-backdrop-filter: blur(2.5px) saturate(1.7);
-  backdrop-filter: blur(2.5px) saturate(1.7);
+  /* 2.5px → 4px: a touch more frost on the fallback, matching the slightly
+     higher outputBlur in index.js TUNING for the Chromium refraction. */
+  -webkit-backdrop-filter: blur(4px) saturate(1.7);
+  backdrop-filter: blur(4px) saturate(1.7);
   /* Bloom (--lg-shadow) is inherited from the shared rule above — restored. */
 }
 
@@ -941,15 +1771,17 @@ html:not(.lg-refract) .a11y-toggle {
   z-index: 9999;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  /* Desktop: logo + links sit together in the middle of the bar. The compact
+     (hamburger) view switches back to space-between: logo left, menu right. */
+  justify-content: center;
+  gap: 1.5rem;
   padding: 0.5rem 0.60rem 0.5rem 0.60rem;
   border-radius: 999px; /* fallback; JS sets exact height/2 */
   /* Drives --lava-now (inherited by the nav's buttons) for their live glow.
      Scoped here so we don't invalidate the whole DOM every frame.
      --color-delay (set once at load by randomizeLava) seeks both this and the
      blobs' lava-color to the SAME random start hue, keeping glow + lava synced. */
-  animation: lava-now 120s linear var(--color-delay, 0s) infinite;
+  animation: lava-now 240s linear var(--color-delay, 0s) infinite;
 }
 
 .nav__logo {
@@ -969,17 +1801,52 @@ html:not(.lg-refract) .a11y-toggle {
 .nav__logo:hover .nav__logo-img {
   transform: scale(1.06);
 }
-.nav__logo-text {
-  font-weight: 800;
-  font-size: 1.2rem;
-  letter-spacing: 0.01em;
-  color: #ffffff;
-}
 
 .nav__buttons {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.25rem;
+}
+
+/* ---- Nav links: plain words, no pill and no glass. Hover and the selected
+   page are shown with the text itself: brighter, plus a soft glow / short
+   underline in the live lava colour (--lava-now, animated on .nav). ---- */
+.nav__link {
+  position: relative;
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+.nav__link::after {
+  content: "";
+  position: absolute;
+  left: 0.8rem;
+  right: 0.8rem;
+  bottom: 0.2rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--lava-now);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.nav__link:hover {
+  color: #ffffff;
+  text-shadow: 0 0 14px var(--lava-now);
+}
+.nav__link.is-current { color: #ffffff; }
+.nav__link.is-current::after {
+  opacity: 1;
+  transform: none;
 }
 
 /* ---- Buttons: pills sized to their text. Hover and selection are box-shadow
@@ -1123,7 +1990,10 @@ html:not(.lg-refract) .a11y-toggle {
 }
 
 /* ---- <=720px: hamburger nav + tighter content ---- */
-@media (max-width: 720px) {
+/* ---- <=860px: hamburger. (Was 720px; the flat seven-item nav needs the
+   room.) ---- */
+@media (max-width: 860px) {
+  .nav { justify-content: space-between; gap: 1rem; }
   .nav__buttons { display: none; }
   .nav__burger { display: flex; }
   /* Same entrance as the desktop dropdown (fade + 6px drop). display toggles
@@ -1132,13 +2002,13 @@ html:not(.lg-refract) .a11y-toggle {
     display: flex;
     animation: menuIn 0.2s ease;
   }
-
-  /* Mobile brand: just the (bigger) circular logo, no name. 40px balances the
-     42px hamburger and fills the pill with a little breathing room. */
-  .nav__logo-text { display: none; }
+  /* Mobile brand: just the (bigger) circular logo. 40px balances the 42px
+     hamburger and fills the pill with a little breathing room. */
   .nav__logo-img { height: 40px; }
+}
 
-  main { padding: 88px 0.85rem 48px; }
+@media (max-width: 720px) {
+  main { --main-top: 88px; --main-bottom: 48px; padding: var(--main-top) 0.85rem var(--main-bottom); }
   .bubble { padding: 1.35rem 1.25rem; border-radius: 22px; }
   .bubble h3 { font-size: 1.2rem; }
   .bubble.has-image { gap: 1.1rem; }
@@ -1146,7 +2016,7 @@ html:not(.lg-refract) .a11y-toggle {
 
 /* ---- <=480px: phones ---- */
 @media (max-width: 480px) {
-  main { padding: 82px 0.65rem 40px; }
+  main { --main-top: 82px; --main-bottom: 40px; padding: var(--main-top) 0.65rem var(--main-bottom); }
   .bubble { padding: 1.1rem 1rem; }
   .nav__mobile { width: calc(100vw - 24px); }
 }
@@ -1274,6 +2144,7 @@ html.a11y body {
 html.a11y .nav,
 html.a11y .btn,
 html.a11y .bubble,
+html.a11y .orb,
 html.a11y .dropdown-menu,
 html.a11y .gallery-modal-nav,
 html.a11y .gallery-modal-close {
@@ -1283,6 +2154,7 @@ html.a11y .gallery-modal-close {
   border: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: none;
 }
+html.a11y .orb { text-shadow: none; }
 /* Gallery in a11y mode: flat frame, no glows, solid hover feedback. */
 html.a11y .gallery-modal-slide::after {
   box-shadow: none;
@@ -1367,6 +2239,10 @@ html.a11y .nav__mobile-item:active {
   background: #2a3040;
   box-shadow: none;
 }
+html.a11y .nav__link { color: #ffffff; text-shadow: none; }
+html.a11y .nav__link:hover { text-decoration: underline; text-shadow: none; }
+html.a11y .nav__link.is-current { text-decoration: underline; text-underline-offset: 4px; }
+html.a11y .nav__link::after { display: none; }
 html.a11y .btn.is-current,
 html.a11y .dropdown-item.is-active,
 html.a11y .nav__mobile-item.is-active {
@@ -1398,7 +2274,7 @@ html.a11y .nav__mobile {
   .nav,
   .btn,
   .bubble,
-  .dropdown-menu,
+  .orb,
   .gallery-modal-nav,
   .gallery-modal-close,
   .a11y-toggle {
@@ -1406,12 +2282,6 @@ html.a11y .nav__mobile {
     backdrop-filter: blur(14px) saturate(1.4) !important;
   }
 
-  /* A floating menu needs more than blur over the dark field: the same dark
-     tint as the non-Chromium fallback, so items stay legible on touch
-     Chromium too (where .lg-refract keeps the rule above from applying). */
-  .dropdown-menu {
-    background: rgba(16, 18, 28, 0.6);
-  }
 
   /* Lava: drop the heavy goo filter and soften the blobs with a transparent-
      edged gradient. Speed the drift + colour cycle up — without the goo morphing
@@ -1426,7 +2296,6 @@ html.a11y .nav__mobile {
       var(--c2) 50%,
       transparent 78%
     );
-    animation-duration: 90s, 90s !important; /* drift, colour */
+    animation-duration: 135s, 180s !important; /* drift, colour */
   }
 }
-

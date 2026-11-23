@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
     <url>
         <loc>https://wesleyjunkins.com/</loc>
-        <lastmod>2025-01-27</lastmod>
+        <lastmod>2026-10-31</lastmod>
         <changefreq>monthly</changefreq>
         <priority>1.0</priority>
+        <image:image>
+            <image:loc>https://wesleyjunkins.com/projectimages/wes.jpg</image:loc>
+            <image:title>Wesley Junkins</image:title>
+            <image:caption>Wesley Junkins, Human-Centered Computing PhD researcher at the University of Florida</image:caption>
+        </image:image>
     </url>
-</urlset> 
+    <url>
+        <loc>https://wesleyjunkins.com/llms.txt</loc>
+        <lastmod>2026-10-31</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+</urlset>

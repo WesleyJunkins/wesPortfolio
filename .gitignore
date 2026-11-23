@@ -1,9 +1,2 @@
-# Plaintext archive video list — NEVER commit this. It holds the real unlisted
-# YouTube links. Only the ENCRYPTED output (archive/data.enc) belongs in git.
-archive/data.source.json
-
-# Private local notes — keep off the published site
-archive/HOW-TO-ADD-VIDEOS.txt
-
 # OS cruft
 .DS_Store

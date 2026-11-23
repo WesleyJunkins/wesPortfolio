@@ -1,6 +1,6 @@
 # wesleyjunkins.com — Content Update Brief
 
-**Owner:** Wesley Junkins · **Prepared:** 2026-10-30
+**Owner:** Wesley Junkins · **Prepared:** 2026-10-30 · **Progress tracker:** [CONTENT-UPDATE-CHECKLIST.md](CONTENT-UPDATE-CHECKLIST.md)
 **Scope:** Content only. **The visual design (Liquid Glass, animated backdrop, nav, gallery) stays exactly as it is.** This brief tells Claude Code what the site should *say* — what to cut, what to add, what to rewrite, and the facts to use. Sections/pages may be added or removed; styling may not change.
 
 **Audiences, in priority order:**
@@ -19,7 +19,7 @@ All three are served by the same thing: a clear research identity, shown through
 - **Length.** Cut hard. A section that is a single paragraph beats one that is five. Project blurbs ≤ 90 words. About ≤ 220 words.
 - **Facts.** Use only what's in §2 of this brief or already on the site. Where this brief says **[VERIFY]**, Wes must confirm before publishing. Don't invent numbers, dates, or venues.
 - **Privacy.** Remove the phone number and the Facebook link from the public site. Keep email, LinkedIn, Google Scholar, GitHub, ORCID (fix the link — see §4), ResearchGate.
-- **Keep working:** the PSL Downloads card with its live GitHub-release lookup, the image galleries ("View all N images"), and the private `/archive`. Nothing in this brief touches them except the PSL blurb copy.
+- **Keep working:** the PSL Downloads card with its live GitHub-release lookup, and the image galleries ("View all N images"). Nothing in this brief touches them except the PSL blurb copy.
 
 ---
 

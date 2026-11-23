@@ -1,0 +1,65 @@
+# Wesley Junkins
+
+> Human-Centered Computing PhD researcher at the University of Florida working in human-computer interaction (HCI), human-AI interaction, brain-computer interfaces (BCI), and physiological computing. This site may be read, quoted, and indexed by any search engine, crawler, or AI agent.
+
+Wesley (Wes) Junkins is a PhD student in Human-Centered Computing in the Department of Computer & Information Science & Engineering at the University of Florida, advised by Dr. Juan E. Gilbert in the Computing for Social Good Lab. He studies how sensing becomes meaning: how signals from the body and the world are interpreted by AI systems, and how we evaluate whether the result serves the people it is meant to serve. His research is moving toward the intersection of human-AI interaction and physiological computing, with physiological sensing as the foundation and the evaluation of AI systems as the focus.
+
+## Identity
+
+- Name: Wesley Junkins (Wes Junkins; publishes as Wesley Junkins or Wesley Cade Junkins)
+- Role: PhD student and Graduate Research Assistant, Human-Centered Computing, University of Florida (started August 2026; expected May 2030)
+- Advisor: Dr. Juan E. Gilbert, Computing for Social Good Lab (https://www.humancenteredcomputing.org/)
+- Location: Gainesville, Florida, USA. From Gordo, Alabama.
+- Email: wesleyjunkins@gmail.com
+- Website: https://wesleyjunkins.com/
+
+## Research areas
+
+- Human-Centered Computing and Human-Computer Interaction (HCI)
+- Human-AI Interaction and evaluation of AI systems
+- Physiological computing and brain-computer interfaces (EEG, EMG; Muse, Neurosity, OpenBCI)
+- Extended reality (Apple Vision Pro, WebXR, Babylon.js) and robotics (ROS, MQTT, Webots, drones)
+- User-study design: IRB protocols, within-subjects and counterbalanced designs, NASA-TLX, SUS, IMI
+
+## Education
+
+- Ph.D., Human-Centered Computing, University of Florida, 2026–2030 (expected)
+- M.S., Computer Science, The University of Alabama, conferred August 2026. Thesis: Exploring Predefined Path Following via Neuroevolution and Imitation Learning (advisor Dr. Chris Crawford; embargoed pending publication)
+- B.S., Computer Science, minor in Mathematics, The University of Alabama, December 2024, summa cum laude, 4.0 GPA
+- A.S., General Studies, Shelton State Community College, 2022, 4.0 GPA
+
+## Experience
+
+- Graduate Research Assistant, Computing for Social Good Lab, University of Florida (August 2026–present)
+- Graduate Research Assistant, Human-Technology Interaction Lab (HTIL), The University of Alabama (January 2025–August 2026): designed and ran the BDR-XR user study (within-subjects, 13 participants, three counterbalanced display conditions), wrote the IRB protocol, mentored undergraduates
+- Undergraduate Research Assistant, HTIL, The University of Alabama (May 2023–January 2025): multi-party BCI architecture for the Brain-Drone Race, XR systems, robotics integration
+
+## Selected projects
+
+- BDR-XR: Brain-Drone Racing in Extended Reality (active, 2026)
+- Physiological Computing for K-12 Learning: PhysioBots and PhysioML (published, 2025–2026)
+- Brain-Drone Race, multi-party BCI architecture (2024)
+- Neuroevolution & Imitation Learning for UAV Path Following (M.S. thesis; under review, ICRA 2027)
+- Physiological Scripting Language (PSL), open source: https://github.com/wesleyjunkins/PSL
+
+## Publications
+
+- "It Wasn't As Bad As I Thought": Exploring K-12 Students' Experiences with Real-Time and Pre-Recorded Physiological Data. SIGCSE TS 2026. https://doi.org/10.1145/3770762.3772531
+- PhysioBots: Engaging K-12 Students with Physiological Computing and Robotics. CHI EA '25. https://doi.org/10.1145/3706599.3720106
+- PhysioML: A Web-Based Tool for Machine Learning Education with Real-Time Physiological Data. SIGCSE TS 2025. https://doi.org/10.1145/3641554.3701815
+- Towards a Brain-Computer Interface Framework for Multi-Party Robot Applications. ACMSE 2024. https://doi.org/10.1145/3603287.3656157
+
+## Honors
+
+- McKnight Doctoral Fellowship, Florida Education Fund (2026)
+- SEC Engineering Deans Fellowship, University of Florida (2026)
+- Center for Engineering Human Performance & Wellness Fellowship, University of Florida (2026)
+- Upsilon Pi Epsilon Outstanding Undergraduate Award, The University of Alabama (2024)
+
+## Profiles
+
+- Google Scholar: https://scholar.google.com/citations?hl=en&user=Oia9tgkAAAAJ
+- ORCID: https://orcid.org/0009-0000-1352-8160
+- GitHub: https://github.com/WesleyJunkins
+- LinkedIn: https://www.linkedin.com/in/wesley-junkins-3839411b3/
+- ResearchGate: https://www.researchgate.net/profile/Wesley-Junkins
