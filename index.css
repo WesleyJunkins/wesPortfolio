@@ -226,6 +226,40 @@ body {
   }
 }
 
+/* ---------------------------------------------------------
+   CANVAS BACKDROPS — the alternatives to the lava, chosen from the display
+   menu: html[data-bg="neural"] (neurons firing), html[data-bg="network"]
+   (a layered neural network) and html[data-bg="eeg"] (scrolling brainwave
+   traces). All are drawn on the one .neural canvas by
+   index.js (initBackgrounds), in the nav glow's live colour. The lava blobs
+   are hidden while one is showing; the soft glow along the bottom stays.
+   No data-bg, or "lava", = the lava lamp.
+   --------------------------------------------------------- */
+.neural {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: none;
+}
+html[data-bg="neural"] .neural,
+html[data-bg="network"] .neural,
+html[data-bg="eeg"] .neural { display: block; }
+/* visibility, NOT display:none. display:none cancels the blobs' colour
+   animation, and showing them again restarts it from the beginning, while
+   the nav and the bottom glow carry on from where they were: the lava then
+   comes back a different colour from the glow and the nav highlights.
+   Hidden this way the blobs keep time (and cost nothing to paint). */
+html[data-bg="neural"] .lava__field,
+html[data-bg="network"] .lava__field,
+html[data-bg="eeg"] .lava__field { visibility: hidden; }
+html[data-bg="neural"] .lava__glow,
+html[data-bg="network"] .lava__glow,
+html[data-bg="eeg"] .lava__glow { --glow: 0.55; }
+html.a11y .neural { display: none !important; }
+
 /* ---- Live glow colour: --lava-now tracks the CURRENT lava colour (same 240s
    cycle as lava-color, no delay → in sync). Animated on .nav ONLY (a tiny
    subtree) and inherited down to the nav buttons / dropdown items. DO NOT
@@ -2117,6 +2151,60 @@ html.a11y .a11y-toggle[aria-pressed="true"] {
   background: #ffd54a;
   border-color: #ffd54a;
   color: #000000;
+}
+
+/* ---- Display menu: the corner bubble plus the column that opens above it.
+   Every bubble is its own fixed-position .a11y-toggle orb (not children of a
+   moving wrapper), so each keeps its own glass. --i = place in the column.
+   Closed: the items are hidden and drop back toward the corner. No scale in
+   the motion: the refraction is sized from the orb's box. ---- */
+.display-menu__item {
+  bottom: calc(16px + var(--i, 1) * 62px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(14px);
+  transition:
+    opacity 0.2s ease, transform 0.25s ease, visibility 0.2s,
+    box-shadow 0.25s ease, background 0.25s ease;
+}
+.display-menu.is-open .display-menu__item {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 0.3s ease calc(var(--i, 1) * 45ms),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i, 1) * 45ms),
+    visibility 0s,
+    box-shadow 0.25s ease, background 0.25s ease;
+}
+/* The menu bubble shows it is open. */
+.display-menu.is-open .display-menu__main {
+  background: var(--lg-tint-hover);
+  box-shadow:
+    var(--lg-shadow),
+    0 0 14px 3px color-mix(in srgb, var(--lava-now) 60%, transparent);
+}
+/* Name tag to the left of each bubble (icons alone are ambiguous). Solid, so
+   it reads over any backdrop. Decorative: the button's aria-label is its name. */
+.display-menu__label {
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(18, 19, 26, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+html.a11y .display-menu__label {
+  background: #141824;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
 /* ---- html.a11y: the accessible presentation ---- */

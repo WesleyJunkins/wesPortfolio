@@ -213,34 +213,81 @@
     <meta name="msapplication-TileImage" content="weslogo/favicon-32x32.png" />
     <meta name="theme-color" content="#000000" />
 
-    <!-- Apply a saved accessibility-mode preference BEFORE first paint (the
-         main script is deferred, which would flash the full design first). -->
+    <!-- Apply the saved accessibility-mode and backdrop choices BEFORE first
+         paint (the main script is deferred, which would flash the defaults
+         first). No saved backdrop = the lava lamp. -->
     <script>
       try {
         if (localStorage.getItem("a11y-mode") === "1")
           document.documentElement.classList.add("a11y");
+        var bg = localStorage.getItem("bg-mode");
+        if (bg === "neural" || bg === "network" || bg === "eeg")
+          document.documentElement.setAttribute("data-bg", bg);
       } catch (e) {}
     </script>
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <!-- First two tab stops on the page: skip link (revealed on focus), then
-         the always-visible accessibility toggle. -->
+    <!-- First tab stops on the page: skip link (revealed on focus), then the
+         display menu. The menu bubble (bottom-right) opens a column of
+         bubbles above it: accessibility mode, then one per backdrop. Every
+         bubble shares the .a11y-toggle orb styling; --i is its place in the
+         column (1 = nearest the menu bubble). index.js: initDisplayMenu,
+         initA11y, setBackground. -->
     <a class="skip-link" href="#main-content">Skip to main content</a>
-    <button
-      class="a11y-toggle"
-      id="a11y-toggle"
-      type="button"
-      aria-pressed="false"
-      aria-label="Accessibility mode"
-      title="Accessibility mode"
-    >
-      <!-- Accessibility glyph (Material "accessibility"): icon-only button,
-           its accessible name comes from the aria-label above. -->
-      <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
-        <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"/>
-      </svg>
-    </button>
+    <div class="display-menu" id="display-menu">
+      <button class="a11y-toggle display-menu__main" id="display-menu-toggle" type="button"
+        aria-expanded="false" aria-controls="display-menu-items" aria-label="Display options" title="Display options">
+        <!-- Sliders glyph (Material "tune"). -->
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+          <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+        </svg>
+      </button>
+      <div id="display-menu-items">
+        <button class="a11y-toggle display-menu__item" id="a11y-toggle" style="--i:1" type="button"
+          aria-pressed="false" aria-label="Accessibility mode">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+            <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"/>
+          </svg>
+          <span class="display-menu__label" aria-hidden="true">Accessibility</span>
+        </button>
+        <button class="a11y-toggle display-menu__item" style="--i:2" type="button"
+          data-bg-choice="lava" aria-pressed="true" aria-label="Background: lava lamp">
+          <!-- Lava: three blobs. -->
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+            <circle cx="9" cy="15" r="5.5"/><circle cx="16.5" cy="7.5" r="3.5"/><circle cx="18.5" cy="16.5" r="2"/>
+          </svg>
+          <span class="display-menu__label" aria-hidden="true">Lava</span>
+        </button>
+        <button class="a11y-toggle display-menu__item" style="--i:3" type="button"
+          data-bg-choice="neural" aria-pressed="false" aria-label="Background: neurons">
+          <!-- Neurons: cells joined by curved fibres. -->
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 7c3 1 4 4 6 5s5-1 7-4M12 12c-1 3-3 4-5 6M12 12c2 2 4 3 6 6"/>
+            <g fill="currentColor" stroke="none"><circle cx="5.5" cy="6.5" r="2.4"/><circle cx="12" cy="12" r="2.8"/><circle cx="19" cy="7.5" r="2.2"/><circle cx="6.5" cy="18.5" r="2.2"/><circle cx="18.5" cy="18.5" r="2.4"/></g>
+          </svg>
+          <span class="display-menu__label" aria-hidden="true">Neurons</span>
+        </button>
+        <button class="a11y-toggle display-menu__item" style="--i:4" type="button"
+          data-bg-choice="network" aria-pressed="false" aria-label="Background: neural network">
+          <!-- Neural network: three layers, fully wired. -->
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true">
+            <path d="M4.5 7 12 4.5M4.5 7 12 12M4.5 7 12 19.5M4.5 17 12 4.5M4.5 17 12 12M4.5 17 12 19.5M12 4.5 19.5 8M12 12 19.5 8M12 19.5 19.5 8M12 4.5 19.5 16M12 12 19.5 16M12 19.5 19.5 16"/>
+            <g fill="currentColor" stroke="none"><circle cx="4.5" cy="7" r="2.1"/><circle cx="4.5" cy="17" r="2.1"/><circle cx="12" cy="4.5" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="19.5" r="2.1"/><circle cx="19.5" cy="8" r="2.1"/><circle cx="19.5" cy="16" r="2.1"/></g>
+          </svg>
+          <span class="display-menu__label" aria-hidden="true">Neural network</span>
+        </button>
+        <button class="a11y-toggle display-menu__item" style="--i:5" type="button"
+          data-bg-choice="eeg" aria-pressed="false" aria-label="Background: brainwaves (EEG)">
+          <!-- EEG: two brainwave traces. -->
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.5 8.5h3l1.5-3 2 6 1.8-4.5 1.4 3 1.3-1.5h8"/>
+            <path d="M2.5 16.5h2l1.2-2 1.5 4 1.6-5 1.6 5 1.5-4 1.3 2.5 1.2-0.5h7.1"/>
+          </svg>
+          <span class="display-menu__label" aria-hidden="true">Brainwaves (EEG)</span>
+        </button>
+      </div>
+    </div>
 
     <!-- ===========================================================
          LAVA — animated gooey "lava-lamp" backdrop on a black field.
@@ -288,6 +335,8 @@
            comes from the same lava-now cycle as the blobs and nav (index.css). -->
       <span class="lava__glow" aria-hidden="true"></span>
     </div>
+    <!-- Canvas backdrops (data-bg="neural" / "network"), drawn by index.js. -->
+    <canvas class="neural" aria-hidden="true"></canvas>
 
     <!-- ===========================================================
          NAV — wide glass pill. Buttons are glass pills; Résumé/Research

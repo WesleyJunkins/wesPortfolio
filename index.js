@@ -1355,6 +1355,825 @@ function createGalleryModal(images, startIndex = 0, originEl = null) {
 }
 window.createGalleryModal = createGalleryModal;
 
+/* =========================================================
+   BACKDROPS — three animated backgrounds, switched live from the display
+   menu (bottom-right bubble) and remembered in localStorage "bg-mode":
+
+     lava     the lava lamp (pure CSS; the default)
+     neural   neurons firing            } all drawn on the one .neural
+     network  a layered neural network  } canvas, by the renderers below
+     eeg      scrolling brainwave traces }
+
+   html[data-bg] holds the current one (index.css shows/hides the lava and
+   the canvas from it). setBackground() is the only place that changes it.
+   ?bg=lava|neural|network|eeg in the address overrides the saved choice.
+
+   A renderer is { build(), frame(t, dt, colour), poke(x, y, t) }: build lays
+   the scene out for the current window size, frame draws one frame, poke is
+   the mouse moving at (x, y). Both take their colour from --lava-now on the
+   nav (read twice a second), so they share its slow colour cycle. The loop
+   only runs for a canvas backdrop, and pauses while the tab is hidden or
+   accessibility mode is on.
+   ========================================================= */
+const BACKDROPS = ["lava", "neural", "network", "eeg"];
+let setBackground = () => {};
+
+function initBackgrounds() {
+  const root = document.documentElement;
+  const canvas = document.querySelector(".neural");
+  const ctx = canvas && canvas.getContext("2d");
+  const S = { W: 0, H: 0 }; // canvas size in CSS px, shared with renderers
+
+  /* ---- Neurons: a small model of neurons firing, not a real simulation.
+     Neurons sit on a jittered grid (even coverage, no clumps), sway slowly,
+     and are wired to their nearest few neighbours by curved fibres. A neuron
+     that FIRES flashes and sends signals down some fibres; an arriving
+     signal usually makes that neuron fire too, so activity spreads in short
+     cascades (a refractory period stops it bouncing straight back). It is
+     mouse-led: the neuron nearest the pointer fires as it passes; away from
+     the mouse a random one fires only now and then. ---- */
+  function neuronRenderer() {
+    const CFG = {
+      spacing: 150,       // px between neurons (smaller = denser)
+      maxNodes: 110,
+      links: 3,           // fibres per neuron (to its nearest neighbours)
+      maxLink: 2.1,       // ...but none longer than this many spacings
+      sway: 16,           // px a neuron drifts around its spot
+      speed: 0.28,        // signal speed, in fibre-lengths per second (avg)
+      spread: 0.5,        // chance a firing neuron sends a signal down each fibre
+      relay: 0.4,         // chance an arriving signal makes the neuron fire
+      refractory: 1100,   // ms before a neuron can fire again
+      spontaneous: 0.1,   // random firings per second, away from the mouse (rare)
+      pokeRadius: 190,    // px: how close the mouse must be to set a neuron off
+      pokeEvery: 110,     // ms between mouse-triggered firings
+      maxSignals: 70,
+      fibre: 0.13,        // brightness of resting fibres (0-1)
+      dim: 0.85,          // overall brightness
+    };
+    let nodes = [], edges = [], signals = [], lastPoke = 0;
+    const P = { x: 0, y: 0 };
+
+    function build() {
+      const { W, H } = S;
+      // Jittered grid, extended past the edges so fibres run off-screen.
+      let step = CFG.spacing;
+      while (((W / step + 2) * (H / step + 2)) > CFG.maxNodes) step *= 1.08;
+      nodes = [];
+      for (let gy = -0.5; gy * step < H + step * 0.5; gy++) {
+        for (let gx = -0.5; gx * step < W + step * 0.5; gx++) {
+          nodes.push({
+            hx: (gx + 0.5 + (Math.random() - 0.5) * 0.8) * step,
+            hy: (gy + 0.5 + (Math.random() - 0.5) * 0.8) * step,
+            x: 0, y: 0,
+            z: 0.45 + Math.random() * 0.55,          // depth: 0.45 far … 1 near
+            ph: Math.random() * 6.283, ph2: Math.random() * 6.283,
+            rate: 0.00012 + Math.random() * 0.00016, // sway speed
+            glow: 0, last: -1e9, edges: [],
+          });
+        }
+      }
+      // Wire each neuron to its nearest neighbours (each pair once).
+      edges = []; signals = [];
+      const seen = new Set();
+      nodes.forEach((n, i) => {
+        nodes
+          .map((m, j) => ({ j, d: Math.hypot(m.hx - n.hx, m.hy - n.hy) }))
+          .filter((o) => o.j !== i && o.d < step * CFG.maxLink)
+          .sort((p, q) => p.d - q.d)
+          .slice(0, CFG.links)
+          .forEach(({ j }) => {
+            const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            nodes[i].edges.push(edges.length);
+            nodes[j].edges.push(edges.length);
+            edges.push({ a: i, b: j, bend: (Math.random() - 0.5) * 0.5 });
+          });
+      });
+    }
+
+    // Point at t (0-1) along a fibre, from node `from` to its other end.
+    function along(e, from, t, out) {
+      const A = nodes[from], B = nodes[from === e.a ? e.b : e.a];
+      const s = from === e.a ? 1 : -1; // keep the curve the same either way
+      const mx = (A.x + B.x) / 2 - (B.y - A.y) * e.bend * s;
+      const my = (A.y + B.y) / 2 + (B.x - A.x) * e.bend * s;
+      const u = 1 - t;
+      out.x = u * u * A.x + 2 * u * t * mx + t * t * B.x;
+      out.y = u * u * A.y + 2 * u * t * my + t * t * B.y;
+      return out;
+    }
+
+    function fire(i, t) {
+      const n = nodes[i];
+      if (!n || t - n.last < CFG.refractory) return;
+      n.last = t;
+      n.glow = 1;
+      for (const ei of n.edges) {
+        if (signals.length >= CFG.maxSignals) break;
+        if (Math.random() < CFG.spread) {
+          signals.push({ e: ei, from: i, t: 0, v: CFG.speed * (0.7 + Math.random() * 0.6) });
+        }
+      }
+    }
+
+    function frame(t, dt, { base, hot }) {
+      const D = CFG.dim;
+      if (Math.random() < CFG.spontaneous * dt) fire((Math.random() * nodes.length) | 0, t);
+      for (const n of nodes) {
+        n.x = n.hx + Math.sin(t * n.rate + n.ph) * CFG.sway;
+        n.y = n.hy + Math.cos(t * n.rate * 0.8 + n.ph2) * CFG.sway;
+        n.glow = Math.max(0, n.glow - dt * 1.1);
+      }
+      ctx.lineCap = "round";
+
+      // Fibres. A fibre brightens a little while either end is glowing.
+      for (const e of edges) {
+        const A = nodes[e.a], B = nodes[e.b];
+        const z = (A.z + B.z) / 2;
+        const lit = Math.max(A.glow, B.glow);
+        ctx.strokeStyle = `rgba(${base},${(CFG.fibre * z + lit * 0.16) * D})`;
+        ctx.lineWidth = 0.6 + z * 0.9;
+        ctx.beginPath();
+        ctx.moveTo(A.x, A.y);
+        ctx.quadraticCurveTo(
+          (A.x + B.x) / 2 - (B.y - A.y) * e.bend,
+          (A.y + B.y) / 2 + (B.x - A.x) * e.bend,
+          B.x, B.y
+        );
+        ctx.stroke();
+      }
+
+      // Signals: a bright head with a short fading tail.
+      for (let k = signals.length - 1; k >= 0; k--) {
+        const s = signals[k];
+        s.t += s.v * dt;
+        const e = edges[s.e];
+        if (s.t >= 1) {
+          const to = s.from === e.a ? e.b : e.a;
+          if (Math.random() < CFG.relay) fire(to, t);
+          else nodes[to].glow = Math.max(nodes[to].glow, 0.45);
+          signals.splice(k, 1);
+          continue;
+        }
+        for (let q = 5; q >= 0; q--) {
+          const tt = s.t - q * 0.035;
+          if (tt < 0) continue;
+          along(e, s.from, tt, P);
+          if (q === 0) {
+            ctx.fillStyle = `rgba(${base},${0.22 * D})`;
+            ctx.beginPath(); ctx.arc(P.x, P.y, 9, 0, 6.283); ctx.fill();
+          }
+          ctx.fillStyle = `rgba(${hot},${(1 - q / 6) * D * (q === 0 ? 1 : 0.5)})`;
+          ctx.beginPath(); ctx.arc(P.x, P.y, q === 0 ? 2.4 : 1.6, 0, 6.283); ctx.fill();
+        }
+      }
+
+      // Neurons: soft halo (swells when firing) + a core.
+      for (const n of nodes) {
+        const halo = (7 + 30 * n.glow) * n.z;
+        ctx.fillStyle = `rgba(${base},${(0.07 + 0.2 * n.glow) * n.z * D})`;
+        ctx.beginPath(); ctx.arc(n.x, n.y, halo, 0, 6.283); ctx.fill();
+        ctx.fillStyle = `rgba(${base},${(0.1 + 0.25 * n.glow) * n.z * D})`;
+        ctx.beginPath(); ctx.arc(n.x, n.y, halo * 0.5, 0, 6.283); ctx.fill();
+        ctx.fillStyle = `rgba(${n.glow > 0.05 ? hot : base},${(0.45 + 0.55 * n.glow) * n.z * D})`;
+        ctx.beginPath(); ctx.arc(n.x, n.y, (1.6 + 1.8 * n.z) * (1 + 0.5 * n.glow), 0, 6.283); ctx.fill();
+      }
+    }
+
+    function poke(x, y, t) {
+      if (t - lastPoke < CFG.pokeEvery) return;
+      lastPoke = t;
+      let best = -1, bd = CFG.pokeRadius * CFG.pokeRadius;
+      nodes.forEach((n, i) => {
+        const d = (n.x - x) ** 2 + (n.y - y) ** 2;
+        if (d < bd) { bd = d; best = i; }
+      });
+      if (best >= 0) fire(best, t);
+    }
+    return { build, frame, poke };
+  }
+
+  /* ---- Neural network: a deep network drawn in 3D, seen from a three-
+     quarter angle. Each layer is a sheet of units floating in space, the
+     sheets run left to right (top to bottom on tall screens) and shrink
+     toward a single column of outputs, like a vision network.
+
+     Wiring is LOCAL, as in a convolutional network: every unit listens to
+     the few units directly behind it in the previous sheet (its receptive
+     field) plus one random long-range unit. So a patch of activity on the
+     input sheet stays a recognisable patch as it travels, drifting and
+     reshaping from sheet to sheet, instead of dissolving into noise.
+
+     A PASS carries a pattern through: streaks of light run along the wires
+     that carry the most, each sheet lights up from what reached it (a real
+     weighted sum per unit), its frame flashes, and at the end the strongest
+     output unit gets a ring: the network's answer.
+
+     The mouse does two things. It is the INPUT: the pointer's position
+     paints a soft spot on the first sheet, and moving it sends that pattern
+     through, so different positions give different answers. And it is the
+     CAMERA: the whole network turns slightly to follow the pointer. Left
+     alone, the camera drifts slowly and a random pattern goes through every
+     few seconds.
+
+     Everything is drawn with additive blending ("lighter"), so overlapping
+     light adds up to a glow the way it would on a real display. ---- */
+  function networkRenderer() {
+    const CFG = {
+      // [rows, columns] of units per sheet, input first, outputs last.
+      sheets: [[7, 7], [6, 6], [8, 4], [6, 6], [5, 4], [5, 1]],
+      sheetGap: 190,     // distance between sheets (model units)
+      unitGap: 50,       // distance between units on a sheet
+      field: 3,          // units of the previous sheet each unit listens to (+1 random)
+      yaw: -0.72,        // resting camera angle, radians (0 = side-on, flat)
+      pitch: 0.2,
+      follow: 0.45,      // how far the camera turns toward the mouse (radians)
+      drift: 0.1,        // how far it wanders on its own
+      focal: 1700,       // perspective strength (smaller = more dramatic)
+      hop: 0.85,         // seconds for a pass to cross from one sheet to the next
+      idleEvery: 6,      // seconds between passes when the mouse is still
+      pokeEvery: 900,    // ms between mouse-started passes
+      maxPasses: 3,
+      carry: 0.22,       // a wire shows a streak if it carries more than this
+      wire: 0.09,        // brightness of resting wires (0-1)
+      dim: 0.95,         // overall brightness
+    };
+    let sheets = [], passes = [], winner = null;
+    let scale = 1, ox = 0, oy = 0, portrait = false, lastPoke = 0, idle = 0;
+    const mouse = { x: 0.5, y: 0.5, sx: 0.5, sy: 0.5, at: -1e9 };
+    let sprite = null, spriteKey = "";
+
+    function build() {
+      const { W, H } = S;
+      portrait = H > W * 1.15;
+      const n = CFG.sheets.length;
+      sheets = CFG.sheets.map(([rows, cols], l) => {
+        const units = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            units.push({
+              // Model space: X runs through the network, Y is up/down on a
+              // sheet, Z is across it.
+              X: (l - (n - 1) / 2) * CFG.sheetGap,
+              Y: (r - (rows - 1) / 2) * CFG.unitGap,
+              Z: (c - (cols - 1) / 2) * CFG.unitGap,
+              // Position within the sheet, 0-1, for matching up receptive fields.
+              u: rows > 1 ? r / (rows - 1) : 0.5,
+              v: cols > 1 ? c / (cols - 1) : 0.5,
+              glow: 0, sx: 0, sy: 0, k: 1, fade: 1,
+              from: [], // [{ i: index in previous sheet, w: weight }]
+            });
+          }
+        }
+        return {
+          units, rows, cols, flash: 0,
+          hy: ((rows - 1) / 2) * CFG.unitGap + 26,
+          hz: ((cols - 1) / 2) * CFG.unitGap + 26,
+          X: (l - (n - 1) / 2) * CFG.sheetGap,
+          corners: [{}, {}, {}, {}],
+        };
+      });
+      // Receptive fields: the nearest few units behind, plus one wildcard.
+      for (let l = 1; l < n; l++) {
+        const prev = sheets[l - 1].units;
+        for (const t of sheets[l].units) {
+          const near = prev
+            .map((p, i) => ({ i, d: (p.u - t.u) ** 2 + (p.v - t.v) ** 2 }))
+            .sort((p, q) => p.d - q.d)
+            .slice(0, CFG.field);
+          t.from = near.map(({ i }) => ({ i, w: 0.45 + Math.random() * 0.55 }));
+          const wild = (Math.random() * prev.length) | 0;
+          if (!t.from.some((f) => f.i === wild)) {
+            t.from.push({ i: wild, w: (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.5) });
+          }
+        }
+      }
+      // Fit and centre: project every sheet's corners with the camera at
+      // rest, then scale and shift so that outline fills the window.
+      cy_ = Math.cos(CFG.yaw); sy_ = Math.sin(CFG.yaw);
+      cp_ = Math.cos(CFG.pitch); sp_ = Math.sin(CFG.pitch);
+      scale = 1; ox = 0; oy = 0;
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      const pt = {};
+      for (const s of sheets) {
+        for (const [sy, sz] of [[-1, -1], [-1, 1], [1, 1], [1, -1]]) {
+          project(s.X, sy * s.hy, sz * s.hz, pt);
+          x0 = Math.min(x0, pt.sx); x1 = Math.max(x1, pt.sx);
+          y0 = Math.min(y0, pt.sy); y1 = Math.max(y1, pt.sy);
+        }
+      }
+      // Leave room for the nav at the top and the camera's sway at the sides.
+      const top = 84, availW = W * 0.82, availH = (H - top) * 0.84;
+      scale = Math.min(availW / (x1 - x0), availH / (y1 - y0));
+      ox = -((x0 + x1) / 2 - W / 2) * scale;
+      oy = -((y0 + y1) / 2 - H / 2) * scale + top / 2;
+      passes = []; winner = null; idle = CFG.idleEvery - 1;
+    }
+
+    // Model point → screen. Writes sx, sy, k (perspective size), fade (depth).
+    let cy_ = 1, sy_ = 0, cp_ = 1, sp_ = 0;
+    function project(X, Y, Z, out) {
+      const x = X * cy_ + Z * sy_;
+      const z1 = -X * sy_ + Z * cy_;
+      const y = Y * cp_ - z1 * sp_;
+      const z = Y * sp_ + z1 * cp_;
+      const k = CFG.focal / (CFG.focal + z);
+      const px = x * k * scale, py = y * k * scale;
+      out.sx = S.W / 2 + ox + (portrait ? py : px);
+      out.sy = S.H / 2 + oy + (portrait ? px : py);
+      out.k = k * scale;
+      out.fade = Math.max(0.3, Math.min(1, 0.65 - z / 900));
+    }
+
+    // The pattern the pointer paints on the input sheet: a soft spot.
+    function spot(cx, cy) {
+      return sheets[0].units.map((u) => Math.exp(-(((u.v - cx) ** 2 + (u.u - cy) ** 2) / 0.045)));
+    }
+
+    function start(acts) {
+      if (passes.length >= CFG.maxPasses || !sheets.length) return;
+      sheets[0].units.forEach((u, i) => { u.glow = Math.max(u.glow, acts[i]); });
+      sheets[0].flash = 1;
+      passes.push({ l: 0, t: 0, acts });
+      idle = 0;
+    }
+
+    function glowSprite(base) {
+      if (spriteKey === base && sprite) return sprite;
+      spriteKey = base;
+      sprite = sprite || document.createElement("canvas");
+      sprite.width = sprite.height = 96;
+      const g = sprite.getContext("2d");
+      const grad = g.createRadialGradient(48, 48, 0, 48, 48, 48);
+      grad.addColorStop(0, `rgba(${base},1)`);
+      grad.addColorStop(0.25, `rgba(${base},0.55)`);
+      grad.addColorStop(0.6, `rgba(${base},0.12)`);
+      grad.addColorStop(1, `rgba(${base},0)`);
+      g.clearRect(0, 0, 96, 96);
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 96, 96);
+      return sprite;
+    }
+
+    function frame(t, dt, { base, hot }) {
+      const D = CFG.dim;
+      const spr = glowSprite(base);
+
+      // Camera: ease toward the mouse, plus a slow drift of its own.
+      mouse.sx += (mouse.x - mouse.sx) * Math.min(1, dt * 2.2);
+      mouse.sy += (mouse.y - mouse.sy) * Math.min(1, dt * 2.2);
+      const yaw = CFG.yaw + (mouse.sx - 0.5) * CFG.follow + Math.sin(t * 0.00013) * CFG.drift;
+      const pitch = CFG.pitch - (mouse.sy - 0.5) * CFG.follow * 0.6 + Math.cos(t * 0.00011) * CFG.drift * 0.5;
+      cy_ = Math.cos(yaw); sy_ = Math.sin(yaw); cp_ = Math.cos(pitch); sp_ = Math.sin(pitch);
+
+      idle += dt;
+      if (idle > CFG.idleEvery) start(spot(Math.random(), Math.random()));
+
+      // While the mouse is moving, its spot shows live on the input sheet.
+      const live = t - mouse.at < 1500 ? spot(mouse.x, mouse.y) : null;
+      sheets.forEach((s, l) => {
+        s.flash = Math.max(0, s.flash - dt * 1.6);
+        s.units.forEach((u, i) => {
+          u.glow = Math.max(0, u.glow - dt * 0.5);
+          if (l === 0 && live) u.glow = Math.max(u.glow, live[i] * 0.55);
+          project(u.X, u.Y, u.Z, u);
+        });
+        project(s.X, -s.hy, -s.hz, s.corners[0]);
+        project(s.X, -s.hy, s.hz, s.corners[1]);
+        project(s.X, s.hy, s.hz, s.corners[2]);
+        project(s.X, s.hy, -s.hz, s.corners[3]);
+      });
+      if (winner) { winner.life -= dt * 0.45; if (winner.life <= 0) winner = null; }
+
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+
+      // Sheets: a faint pane with an outline that flashes when a pass lands.
+      for (const s of sheets) {
+        const c = s.corners;
+        ctx.beginPath();
+        ctx.moveTo(c[0].sx, c[0].sy);
+        for (let q = 1; q < 4; q++) ctx.lineTo(c[q].sx, c[q].sy);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${base},${(0.022 + s.flash * 0.05) * D})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${base},${(0.2 + s.flash * 0.45) * D})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Resting wires: one path per pair of sheets.
+      ctx.lineWidth = 0.7;
+      for (let l = 1; l < sheets.length; l++) {
+        const prev = sheets[l - 1].units;
+        ctx.strokeStyle = `rgba(${base},${CFG.wire * D})`;
+        ctx.beginPath();
+        for (const u of sheets[l].units) {
+          for (const f of u.from) {
+            ctx.moveTo(prev[f.i].sx, prev[f.i].sy);
+            ctx.lineTo(u.sx, u.sy);
+          }
+        }
+        ctx.stroke();
+      }
+
+      // Passes: streaks along the wires that carry the most.
+      for (let k = passes.length - 1; k >= 0; k--) {
+        const p = passes[k];
+        p.t += dt / CFG.hop;
+        const A = sheets[p.l].units, B = sheets[p.l + 1].units;
+        const head = Math.min(1, p.t), tail = Math.max(0, head - 0.3);
+        for (const u of B) {
+          for (const f of u.from) {
+            const c = p.acts[f.i] * Math.abs(f.w);
+            if (c < CFG.carry) continue;
+            const a = A[f.i];
+            const x0 = a.sx + (u.sx - a.sx) * tail, y0 = a.sy + (u.sy - a.sy) * tail;
+            const x1 = a.sx + (u.sx - a.sx) * head, y1 = a.sy + (u.sy - a.sy) * head;
+            const xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
+            // Tail (dim), front half (bright), then the head.
+            ctx.strokeStyle = `rgba(${base},${Math.min(1, c * 0.45) * D})`;
+            ctx.lineWidth = 1.1;
+            ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(xm, ym); ctx.stroke();
+            ctx.strokeStyle = `rgba(${hot},${Math.min(1, c * 0.8) * D})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(xm, ym); ctx.lineTo(x1, y1); ctx.stroke();
+            const r = 7 * u.k;
+            ctx.globalAlpha = Math.min(1, c) * D;
+            ctx.drawImage(spr, x1 - r, y1 - r, r * 2, r * 2);
+            ctx.globalAlpha = 1;
+          }
+        }
+        if (p.t >= 1) {
+          // Arrived: each unit = its weighted sum (negatives clipped), then the
+          // sheet is stretched to 0-1 so every sheet has clear highs and lows.
+          const sums = B.map((u) => Math.max(0, u.from.reduce((acc, f) => acc + f.w * p.acts[f.i], 0)));
+          const hi = Math.max(...sums);
+          const acts = sums.map((v) => (hi > 1e-6 ? (v / hi) ** 1.4 : 0));
+          B.forEach((u, i) => { u.glow = Math.max(u.glow, acts[i]); });
+          sheets[p.l + 1].flash = 1;
+          if (p.l + 1 >= sheets.length - 1) {
+            winner = { u: B[acts.indexOf(Math.max(...acts))], life: 1 };
+            passes.splice(k, 1);
+          } else {
+            p.l += 1; p.t = 0; p.acts = acts;
+          }
+        }
+      }
+
+      // Units: a glow that swells with activation, and a small core.
+      for (const s of sheets) {
+        for (const u of s.units) {
+          const r = (9 + 26 * u.glow) * u.k;
+          ctx.globalAlpha = Math.min(1, (0.16 + 0.84 * u.glow) * u.fade * D);
+          ctx.drawImage(spr, u.sx - r, u.sy - r, r * 2, r * 2);
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = `rgba(${u.glow > 0.3 ? hot : base},${(0.35 + 0.65 * u.glow) * u.fade * D})`;
+          ctx.beginPath(); ctx.arc(u.sx, u.sy, (1.5 + 1.8 * u.glow) * u.k + 0.6, 0, 6.283); ctx.fill();
+        }
+      }
+
+      // The answer: the winning output stays lit inside two expanding rings.
+      if (winner) {
+        const a = winner.life, u = winner.u;
+        u.glow = Math.max(u.glow, a);
+        for (let q = 0; q < 2; q++) {
+          const grow = (1 - a) * (1 + q * 0.6);
+          ctx.strokeStyle = `rgba(${hot},${a * (q ? 0.45 : 0.9) * D})`;
+          ctx.lineWidth = 2 - q * 0.8;
+          ctx.beginPath(); ctx.arc(u.sx, u.sy, (12 + grow * 34) * u.k, 0, 6.283); ctx.stroke();
+        }
+      }
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    function poke(x, y, t) {
+      mouse.x = x / Math.max(1, S.W);
+      mouse.y = y / Math.max(1, S.H);
+      mouse.at = t;
+      if (t - lastPoke < CFG.pokeEvery) return;
+      lastPoke = t;
+      start(spot(mouse.x, mouse.y));
+    }
+    return { build, frame, poke };
+  }
+
+  /* ---- EEG: a multi-channel brainwave recording scrolling across the
+     screen, the kind of trace my research starts from. One row per electrode
+     (standard 10-20 names, front of the head at the top), drawn as if on
+     slowly moving chart paper: new signal is written at the right edge,
+     under a small glowing pen tip, and drifts left.
+
+     It behaves like a RECORDING. Each sample is computed once, at the moment
+     the pen writes it, and stored; after that it only scrolls. Nothing
+     already on the paper ever changes. So the mouse affects only what is
+     being written right now, and what it did stays on the trace as a record
+     that slides away to the left.
+
+     The waves are built from the real EEG rhythms rather than random noise:
+     slow delta and theta, the ~10 Hz ALPHA rhythm that comes and goes in
+     bursts and is strongest at the back of the head (so the lower rows show
+     more of it), and small fast beta. Each channel has its own phases, so no
+     two rows match.
+
+     The mouse is "attention". While it moves, the channels nearest the
+     pointer's HEIGHT stop writing calm alpha and write fast, busy beta
+     instead, which is what real EEG does over a part of the brain that
+     starts working (event-related desynchronisation); those stretches are
+     also drawn brighter. Moving faster reaches more channels, makes the
+     waves taller, and stirs every channel a little. A quick flick writes a
+     BLINK: the big slow bump that blinks put on the frontal channels. Left
+     alone, an occasional blink happens by itself. ---- */
+  function eegRenderer() {
+    const CFG = {
+      rowGap: 72,        // px between channels (sets how many fit)
+      minRows: 5, maxRows: 15,
+      speed: 42,         // px per second the paper moves
+      step: 4,           // px between recorded samples (smaller = smoother, slower)
+      amp: 0.3,          // wave height as a share of the row gap
+      rows: 1.5,         // how many channels above/below the pointer respond
+      blinkEvery: 9,     // seconds between idle blinks
+      flick: 1.6,        // px per ms the mouse must move to cause a blink
+      fast: 1.1,         // px per ms that counts as full-speed movement
+      surge: 0.9,        // extra channel reach + wave height at full speed (0 = none)
+      arousal: 0.4,      // how much EVERY channel livens up at full speed (0-1)
+      trace: 0.5,        // brightness of a resting trace (0-1)
+      dim: 0.9,          // overall brightness
+    };
+    const NAMES = ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "C3", "Cz", "C4", "P3", "Pz", "P4", "O1", "O2"];
+    // scroll = how far the paper has moved (px) = the pen's position on it.
+    // written = paper position of the newest recorded sample.
+    let chans = [], blinks = [], scroll = 0, written = 0, keep = 0, sinceBlink = 0, lastBlink = -1e9;
+    const mouse = { y: -1e4, at: -1e9, px: 0, py: 0, pt: 0, power: 0, energy: 0 };
+
+    function build() {
+      const { W, H } = S;
+      const n = Math.max(CFG.minRows, Math.min(CFG.maxRows, Math.floor((H - 110) / CFG.rowGap)));
+      const gap = (H - 110) / n;
+      keep = Math.ceil(W / CFG.step) + 3; // samples that fit on screen
+      chans = [];
+      for (let c = 0; c < n; c++) {
+        const back = n > 1 ? c / (n - 1) : 0.5; // 0 = front of head, 1 = back
+        chans.push({
+          y: 96 + gap * (c + 0.5),
+          gap, back,
+          name: NAMES[Math.round(back * (NAMES.length - 1))],
+          ph: Array.from({ length: 10 }, () => Math.random() * 6.283),
+          // Slightly different rhythm speeds per channel.
+          fa: 1 + (Math.random() - 0.5) * 0.08,
+          fb: 1 + (Math.random() - 0.5) * 0.12,
+          v: [],   // recorded samples (oldest first), in wave units
+          hot: [], // how strongly the mouse was acting when each was written
+        });
+      }
+      blinks = []; sinceBlink = CFG.blinkEvery - 2;
+      // Start with a screenful of calm recording already on the paper.
+      written = scroll - keep * CFG.step;
+      record(0, 0);
+    }
+
+    // Signal for one channel at paper position x (px), -1…1-ish. m = how
+    // strongly the mouse is acting here (0-1).
+    function wave(ch, x, m) {
+      const p = ch.ph;
+      // Alpha arrives in bursts ("spindles"): a slow envelope gates it.
+      const burst = Math.max(0, 0.45 + 0.55 * Math.sin(x * 0.0041 + p[0]) * Math.sin(x * 0.0013 + p[1]) + 0.25 * Math.sin(x * 0.0009 + p[9]));
+      const alpha = (0.35 + 0.75 * ch.back) * burst * Math.sin(x * 0.165 * ch.fa + p[2]);
+      const beta = 0.2 * (0.6 + 0.4 * Math.sin(x * 0.007 + p[3])) * Math.sin(x * 0.37 * ch.fb + p[4]);
+      const theta = 0.3 * Math.sin(x * 0.085 + p[5]);
+      const delta = 0.22 * Math.sin(x * 0.033 + p[6]);
+      const fuzz = 0.07 * (Math.sin(x * 0.61 + p[7]) + Math.sin(x * 1.13 + p[8]));
+      return alpha * (1 - 0.88 * m) + beta * (1 + 3.4 * m) + theta * (1 - 0.4 * m) + delta + fuzz
+        + m * 0.2 * Math.sin(x * 0.7 + p[1]);
+    }
+
+    // A blink is written by the pen as it goes, so it is centred a little
+    // AHEAD of the pen: the whole bump gets recorded over the next moments.
+    function blink(strength) {
+      blinks.push({ x: scroll + 95, a: strength });
+      if (blinks.length > 6) blinks.shift();
+      sinceBlink = 0;
+    }
+
+    // Write every sample the pen has passed since the last frame, using the
+    // mouse's state NOW. E = movement energy (0-1), power = mouse presence.
+    function record(E, power) {
+      const everywhere = CFG.arousal * E;
+      while (written + CFG.step <= scroll) {
+        written += CFG.step;
+        for (const ch of chans) {
+          const dr = (mouse.y - ch.y) / (ch.gap * CFG.rows * (1 + 0.6 * CFG.surge * E));
+          const local = power * Math.exp(-dr * dr);
+          const m = Math.min(1, Math.max(local, everywhere));
+          let v = wave(ch, written, m) * (1 + CFG.surge * 0.7 * E * local);
+          const front = 1 - ch.back; // blinks are a frontal artifact
+          for (const b of blinks) {
+            const d = (written - b.x) / 34;
+            if (d > -4 && d < 4) v -= b.a * 3.2 * front * front * Math.exp(-d * d);
+          }
+          ch.v.push(v);
+          ch.hot.push(local);
+          if (ch.v.length > keep) { ch.v.shift(); ch.hot.shift(); }
+        }
+      }
+    }
+
+    function frame(t, dt, { base, hot }) {
+      const { W } = S, D = CFG.dim;
+      scroll += CFG.speed * dt;
+      sinceBlink += dt;
+      if (sinceBlink > CFG.blinkEvery) blink(0.8 + Math.random() * 0.4);
+      blinks = blinks.filter((b) => b.x > written - 200);
+
+      // The mouse's effect builds while it moves and ebbs when it rests.
+      // energy = how fast it is moving right now; fades in about a second.
+      const active = t - mouse.at < 900;
+      mouse.power += ((active ? 1 : 0) - mouse.power) * Math.min(1, dt * (active ? 4 : 1.6));
+      mouse.energy *= Math.exp(-dt * 1.6);
+      record(mouse.energy, mouse.power);
+
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
+      ctx.textBaseline = "middle";
+
+      // Chart paper: a tick every five seconds of recording, moving with it.
+      ctx.strokeStyle = `rgba(${base},${0.07 * D})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const tick = CFG.speed * 5;
+      for (let x = W - (scroll % tick); x > 0; x -= tick) {
+        ctx.moveTo(x, 86); ctx.lineTo(x, S.H);
+      }
+      ctx.stroke();
+
+      for (const ch of chans) {
+        const A = ch.gap * CFG.amp, n = ch.v.length;
+        if (n < 2) continue;
+        // Screen x of sample k: the newest sits just behind the pen (right edge).
+        const x0 = W - (scroll - written) - (n - 1) * CFG.step;
+        const front = 1 - ch.back;
+
+        // The whole recorded trace.
+        ctx.strokeStyle = `rgba(${base},${CFG.trace * (0.75 + 0.25 * front) * D})`;
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        ctx.moveTo(x0, ch.y + ch.v[0] * A);
+        for (let k = 1; k < n; k++) ctx.lineTo(x0 + k * CFG.step, ch.y + ch.v[k] * A);
+        ctx.stroke();
+
+        // Stretches written while the mouse was acting, redrawn brighter:
+        // a wide soft pass, then a bright core where it was strongest.
+        for (let pass = 0; pass < 2; pass++) {
+          const floor = pass ? 0.45 : 0.12;
+          ctx.strokeStyle = `rgba(${hot},${(pass ? 0.6 : 0.3) * D})`;
+          ctx.lineWidth = pass ? 1.6 : 2.2;
+          ctx.beginPath();
+          let open = false;
+          for (let k = 0; k < n; k++) {
+            if (ch.hot[k] > floor) {
+              const x = x0 + k * CFG.step, y = ch.y + ch.v[k] * A;
+              if (open) ctx.lineTo(x, y); else { ctx.moveTo(x, y); open = true; }
+            } else open = false;
+          }
+          ctx.stroke();
+        }
+
+        // Pen tip at the right edge, and the electrode name at the left.
+        const ty = ch.y + ch.v[n - 1] * A;
+        ctx.fillStyle = `rgba(${base},${(0.25 + 0.3 * ch.hot[n - 1]) * D})`;
+        ctx.beginPath(); ctx.arc(W - 3, ty, 7 + 4 * ch.hot[n - 1], 0, 6.283); ctx.fill();
+        ctx.fillStyle = `rgba(${hot},${0.9 * D})`;
+        ctx.beginPath(); ctx.arc(W - 3, ty, 2.2, 0, 6.283); ctx.fill();
+        ctx.fillStyle = `rgba(${base},${0.5 * D})`;
+        ctx.fillText(ch.name, 12, ch.y - ch.gap * 0.34);
+      }
+    }
+
+    function poke(x, y, t) {
+      // Pointer speed: drives the energy, and a fast flick writes a blink.
+      const dtm = t - mouse.pt;
+      if (dtm > 0 && dtm < 120) {
+        const v = Math.hypot(x - mouse.px, y - mouse.py) / dtm;
+        mouse.energy = Math.max(mouse.energy, Math.min(1, v / CFG.fast));
+        if (v > CFG.flick && t - lastBlink > 1400) {
+          lastBlink = t;
+          blink(Math.min(1.3, 0.7 + v * 0.15));
+        }
+      }
+      mouse.px = x; mouse.py = y; mouse.pt = t;
+      mouse.y = y; mouse.at = t;
+    }
+    return { build, frame, poke };
+  }
+
+  const renderers = ctx ? { neural: neuronRenderer(), network: networkRenderer(), eeg: eegRenderer() } : {};
+  let current = null;        // the active renderer (null = lava)
+  let rgb = [108, 124, 247]; // live colour, from --lava-now
+  let raf = 0, prev = 0, colourAt = -1e9;
+
+  function resize() {
+    if (!ctx) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    S.W = window.innerWidth; S.H = window.innerHeight;
+    canvas.width = Math.round(S.W * dpr); canvas.height = Math.round(S.H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (current) current.build();
+  }
+
+  function frame(t) {
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (t - prev) / 1000 || 0);
+    prev = t;
+    if (t - colourAt > 500) { // follow the nav's live colour
+      colourAt = t;
+      const nav = document.querySelector(".nav");
+      const m = nav && getComputedStyle(nav).getPropertyValue("--lava-now").match(/[\d.]+/g);
+      if (m && m.length >= 3) {
+        const c = m.slice(0, 3).map(Number);
+        const next = c.every((v) => v <= 1) ? c.map((v) => v * 255) : c; // color(srgb …) form
+        if (next.some((v) => v < 250)) rgb = next; // ignore the white fallback
+      }
+    }
+    const [r, g, b] = rgb;
+    const colour = {
+      base: `${Math.round(r)},${Math.round(g)},${Math.round(b)}`,
+      // A lighter tint for the brightest parts.
+      hot: `${Math.round(r + (255 - r) * 0.6)},${Math.round(g + (255 - g) * 0.6)},${Math.round(b + (255 - b) * 0.6)}`,
+    };
+    ctx.clearRect(0, 0, S.W, S.H);
+    current.frame(t, dt, colour);
+  }
+
+  function sync() {
+    cancelAnimationFrame(raf);
+    raf = 0;
+    if (current && !document.hidden && !root.classList.contains("a11y")) {
+      prev = performance.now();
+      raf = requestAnimationFrame(frame);
+    }
+  }
+
+  setBackground = (mode, save = true) => {
+    if (!BACKDROPS.includes(mode) || (mode !== "lava" && !renderers[mode])) mode = "lava";
+    root.dataset.bg = mode;
+    if (save) { try { localStorage.setItem("bg-mode", mode); } catch (e) {} }
+    current = renderers[mode] || null;
+    if (current) resize();
+    else if (ctx) ctx.clearRect(0, 0, S.W, S.H);
+    sync();
+    document.querySelectorAll("[data-bg-choice]").forEach((el) =>
+      el.setAttribute("aria-pressed", String(el.dataset.bgChoice === mode))
+    );
+  };
+
+  document.addEventListener("visibilitychange", sync);
+  if (typeof MutationObserver !== "undefined") {
+    new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ["class"] });
+  }
+  let rt = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(rt);
+    rt = setTimeout(resize, 200);
+  }, { passive: true });
+  window.addEventListener("pointermove", (ev) => {
+    if (current && raf && ev.pointerType === "mouse") current.poke(ev.clientX, ev.clientY, performance.now());
+  }, { passive: true });
+
+  // Start-up: ?bg= beats the saved choice (already on <html> from the inline
+  // head script), which beats the default. A ?bg= visit is not saved.
+  const want = new URLSearchParams(location.search).get("bg");
+  if (BACKDROPS.includes(want)) setBackground(want, false);
+  else setBackground(root.dataset.bg || "lava", false);
+}
+
+/* Display menu: the bubble in the bottom-right corner opens a short column
+   of bubbles above it: accessibility mode, then one per backdrop (wired by
+   data-bg-choice → setBackground). Stays open while you try backdrops;
+   closes on the bubble again, an outside click, or Escape. */
+function initDisplayMenu() {
+  const menu = document.getElementById("display-menu");
+  const main = document.getElementById("display-menu-toggle");
+  if (!menu || !main) return;
+  const set = (open) => {
+    menu.classList.toggle("is-open", open);
+    main.setAttribute("aria-expanded", String(open));
+  };
+  main.addEventListener("click", (e) => {
+    e.stopPropagation();
+    set(!menu.classList.contains("is-open"));
+  });
+  menu.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => set(false));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && menu.classList.contains("is-open")) { set(false); main.focus(); }
+  });
+  menu.querySelectorAll("[data-bg-choice]").forEach((el) =>
+    el.addEventListener("click", () => setBackground(el.dataset.bgChoice))
+  );
+}
+
 /* Randomise the lava on each load: every blob's position + motion, plus the
    colour phase. The colour phase is one shared --color-delay (a negative delay
    that seeks into the 240s cycle), so blobs + nav-button glow start on the SAME
@@ -1485,6 +2304,8 @@ function initA11y() {
 }
 
 randomizeLava();
+initBackgrounds();
+initDisplayMenu();
 cloneOtherProjects();
 renderProjectImages();
 initA11y();
