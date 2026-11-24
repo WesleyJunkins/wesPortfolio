@@ -7,7 +7,7 @@ For every image referenced in index.html (data-images arrays and showcase
   projectimages/web/<path>.webp     long side <= 1600 px, q80, alpha kept.
                                     Galleries and showcases.
 
-The page only ever downloads these. index.js (thumbFor / webFor) maps an
+The page only ever downloads these. js/projects.js (thumbFor / webFor) maps an
 original's path to them and falls back to the original if a copy is missing,
 so the ORIGINALS ARE THE SOURCE, not what visitors load. Run this after adding
 or replacing any image, and commit both folders:

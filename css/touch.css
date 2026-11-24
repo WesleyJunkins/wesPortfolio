@@ -1,0 +1,41 @@
+/* ---- Lava simplification for touch devices (and very narrow viewports) ----
+   The full-screen #lava-goo SVG filter is an animated gaussian blur over the
+   whole viewport every frame — the heaviest GPU cost, and it bogs phones down.
+   On touch devices we drop the filter entirely and give the blobs soft,
+   transparent-edged gradients instead: they still drift, squish, and colour-
+   cycle (and blend where they overlap), just without the metaball necking.
+   (hover:none + pointer:coarse) targets real touch devices in any orientation;
+   the max-width fallback lets you preview the lighter version by resizing. */
+@media (hover: none) and (pointer: coarse), (max-width: 600px) {
+  /* Mobile glass: swap the heavy url() displacement refraction (or, on WebKit /
+     iOS where url() backdrop-filters aren't supported, the weak 2px fallback)
+     for a proper frosted blur on every dock + pill. !important beats the inline
+     backdrop-filter:url() the engine sets per element. */
+  .nav,
+  .btn,
+  .bubble,
+  .orb,
+  .gallery-modal-nav,
+  .gallery-modal-close,
+  .a11y-toggle {
+    -webkit-backdrop-filter: blur(14px) saturate(1.4) !important;
+    backdrop-filter: blur(14px) saturate(1.4) !important;
+  }
+
+
+  /* Lava: drop the heavy goo filter and soften the blobs with a transparent-
+     edged gradient. Speed the drift + colour cycle up — without the goo morphing
+     the slow desktop pace (~480s) read as static here. */
+  .lava__field {
+    filter: none;
+  }
+  .lava__blob {
+    background: radial-gradient(
+      circle at 35% 30%,
+      var(--c1),
+      var(--c2) 50%,
+      transparent 78%
+    );
+    animation-duration: 135s, 180s !important; /* drift, colour */
+  }
+}

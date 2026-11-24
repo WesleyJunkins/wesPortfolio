@@ -1,0 +1,292 @@
+/* ---------------------------------------------------------
+   SHOWCASE — pinned scroll presentation (markup: .showcase in index.html;
+   engine: initShowcases in js/showcase.js). Like the Research story, the tall
+   .showcase gives the scroll distance and .showcase__stage sticks to the
+   viewport; unlike it, all timing lives in the markup (data-in / data-out /
+   data-fx / data-count), so new showcases need no JS.
+
+   Every direct child of the stage is centred in the SAME grid cell, stacked.
+   What is visible at any moment is decided purely by the scroll timeline.
+   Glass tiles (.bubble) may only use rise / fade: the refraction map is
+   sized from the element's box, so a scale (zoom / grow) would distort it.
+   --------------------------------------------------------- */
+.showcase {
+  --beats: 7;                /* ~one screen of scrolling per beat */
+  position: relative;
+  height: calc(var(--beats) * 85vh);
+  /* Full-bleed: break out of main's max-width and cancel its nav clearance
+     so the stage is the whole viewport. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: calc(-1 * var(--main-top, 104px));
+  margin-bottom: 1.5rem;
+}
+.showcase__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.showcase__stage > * { grid-area: 1 / 1; }
+
+/* The picture frame. Width is capped by the viewport height too, so the
+   whole frame always fits on screen under the nav. */
+.showcase__media {
+  --ratio: 2.047;            /* width / height of the images (1912 x 934) */
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  width: min(94vw, calc(74vh * var(--ratio)), 1600px);
+  aspect-ratio: var(--ratio);
+  border-radius: 32px;
+  overflow: hidden;
+  background: #0b0d14;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.14);
+  will-change: transform;
+}
+.showcase__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Darkens the picture so text set over it stays readable. */
+.showcase__scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.42));
+}
+
+/* A layer of text, centred on the stage above the picture. */
+.showcase__layer {
+  position: relative;
+  z-index: 2;
+  width: min(90vw, 1000px);
+  text-align: center;
+  color: #ffffff;
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(0, 0, 0, 0.75),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.showcase__layer p,
+.showcase__layer h2 { margin: 0; }
+.showcase__eyebrow {
+  font-size: clamp(0.78rem, 1.3vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+.showcase__layer .showcase__title {
+  margin: 0.6rem 0 0.9rem;
+  font-size: clamp(4rem, 17vw, 13rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+.showcase__sub {
+  font-size: clamp(1.1rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.86);
+}
+.showcase__statement {
+  font-size: clamp(1.7rem, 4.8vw, 4rem);
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.showcase__list {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  font-size: clamp(1.7rem, 4.8vw, 4rem);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Closing layer: big numbers, then a glass summary tile under them. */
+.showcase__layer--end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.5rem, 5vh, 3.25rem);
+}
+.showcase__stats {
+  display: flex;
+  justify-content: center;
+  gap: clamp(1.25rem, 5vw, 4.5rem);
+  width: 100%;
+}
+.showcase__stat {
+  flex: 1 1 0;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.showcase__num {
+  font-size: clamp(3.5rem, 11vw, 8rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.showcase__label {
+  font-size: clamp(0.82rem, 1.25vw, 1rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.76);
+}
+.showcase__card {
+  width: min(100%, 760px);
+  text-align: left;
+}
+
+/* Long titles ("Brain-Drone Race") need a smaller size than a short one. */
+.showcase__layer .showcase__title--long {
+  font-size: clamp(2.8rem, 10.5vw, 8.5rem);
+  line-height: 1;
+}
+/* Sentence-length list items (process steps) instead of two-word ones. */
+.showcase__list--steps {
+  display: grid;
+  gap: 0.9rem;
+  font-size: clamp(1.25rem, 3vw, 2.5rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+/* A text layer that leaves room on both sides for cut-outs. */
+.showcase__layer--narrow { width: min(34vw, 460px); }
+
+/* Background-less images (.showcase__cutout stays put once it arrives;
+   .showcase__racer flies across). Where they rest is set with the individual
+   `translate` property, which stacks with the `transform` the timeline
+   animates. Most of this hardware is black, so each sits on a soft pool of
+   light or it would vanish into the dark backdrop. */
+.showcase__cutout,
+.showcase__racer {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  will-change: transform;
+}
+.showcase__cutout::before,
+.showcase__racer::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1) 55%, rgba(255, 255, 255, 0) 100%);
+}
+.showcase__cutout img,
+.showcase__racer img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.55));
+}
+.showcase__cutout figcaption,
+.showcase__racer figcaption {
+  font-size: clamp(0.78rem, 1.2vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.showcase__cutout { width: clamp(180px, 26vw, 400px); }
+.showcase__cutout--a { translate: -30vw 0; }
+.showcase__cutout--b { translate: 30vw 0; }
+/* Race lanes: one above the text, one below. */
+.showcase__racer { width: clamp(130px, 19vw, 280px); }
+.showcase__racer img { rotate: -5deg; } /* nose down: leaning into the run */
+.showcase__racer--a { translate: 0 -25vh; }
+.showcase__racer--b { translate: 0 25vh; }
+
+/* A row of big years, arriving one at a time. */
+.showcase__years {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 clamp(1rem, 4vw, 3.5rem);
+  margin-top: 1rem;
+  font-size: clamp(2.4rem, 8vw, 6.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+/* A summary tile that sits in a layer of its own. */
+.showcase__layer > .showcase__card { margin: 0 auto; }
+
+@media (max-width: 720px) {
+  /* Portrait phones: a taller crop of the picture so it has presence. */
+  .showcase__media {
+    width: 92vw;
+    aspect-ratio: 4 / 5;
+    max-height: 72vh;
+    border-radius: 24px;
+  }
+  .showcase__stats { gap: 0.75rem; }
+  /* No room beside the text: cut-outs go above and below it instead. */
+  .showcase__layer--narrow { width: 90vw; }
+  .showcase__cutout { width: min(54vw, 30vh); }
+  .showcase__cutout--a { translate: 0 -29vh; }
+  .showcase__cutout--b { translate: 0 29vh; }
+  .showcase__racer { width: min(40vw, 22vh); }
+  .showcase__racer--a { translate: 0 -27vh; }
+  .showcase__racer--b { translate: 0 27vh; }
+  .showcase__years { gap: 0 1.25rem; }
+}
+
+/* Accessibility mode: no pinning or scrubbing, the same content in a column. */
+html.a11y .showcase {
+  height: auto;
+  width: auto;
+  margin: 0;
+}
+html.a11y .showcase__stage {
+  position: static;
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+html.a11y .showcase__layer { order: 1; text-shadow: none; }
+html.a11y .showcase__layer:first-of-type { order: -1; } /* title above the pictures */
+html.a11y .showcase__media {
+  order: 0;
+  width: 100%;
+  aspect-ratio: auto;
+  display: grid;
+  gap: 1rem;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+html.a11y .showcase__media img { position: static; height: auto; }
+html.a11y .showcase__cutout,
+html.a11y .showcase__racer { order: 1; translate: none; width: min(60vw, 280px); }
+html.a11y .showcase__racer img { rotate: none; }
+html.a11y .showcase__layer--narrow { width: min(90vw, 1000px); }
+html.a11y .showcase__scrim,
+html.a11y .showcase .story__hint { display: none; }

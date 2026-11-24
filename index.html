@@ -221,18 +221,33 @@
         if (localStorage.getItem("a11y-mode") === "1")
           document.documentElement.classList.add("a11y");
         var bg = localStorage.getItem("bg-mode");
-        if (bg === "neural" || bg === "network" || bg === "eeg")
+        if (bg && bg !== "lava")
           document.documentElement.setAttribute("data-bg", bg);
       } catch (e) {}
     </script>
-    <link rel="stylesheet" href="index.css" />
+    <!-- Stylesheets. ORDER MATTERS: later files override earlier ones, so add
+         new files where they belong in this list, not at the end by habit.
+         What lives where is listed in README.md. -->
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/backgrounds.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/downloads.css" />
+    <link rel="stylesheet" href="css/gallery.css" />
+    <link rel="stylesheet" href="css/research-story.css" />
+    <link rel="stylesheet" href="css/showcase.css" />
+    <link rel="stylesheet" href="css/dropdowns.css" />
+    <link rel="stylesheet" href="css/glass.css" />
+    <link rel="stylesheet" href="css/chrome.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+    <link rel="stylesheet" href="css/accessibility.css" />
+    <link rel="stylesheet" href="css/touch.css" />
   </head>
   <body>
     <!-- First tab stops on the page: skip link (revealed on focus), then the
          display menu. The menu bubble (bottom-right) opens a column of
          bubbles above it: accessibility mode, then one per backdrop. Every
          bubble shares the .a11y-toggle orb styling; --i is its place in the
-         column (1 = nearest the menu bubble). index.js: initDisplayMenu,
+         column (1 = nearest the menu bubble). js/display-menu.js, js/accessibility.js, js/backgrounds/: initDisplayMenu,
          initA11y, setBackground. -->
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="display-menu" id="display-menu">
@@ -319,7 +334,7 @@
       </defs>
     </svg>
     <div class="lava" aria-hidden="true">
-      <!-- .lava__field is the half-resolution canvas (see index.css): all
+      <!-- .lava__field is the half-resolution canvas (see css/backgrounds.css): all
            blob geometry is divided by --inv (2) and scaled back up. -->
       <div class="lava__field">
         <!-- 4 big blobs in two loose lanes; each orbits an elliptical path
@@ -332,15 +347,15 @@
       <!-- Lamp glow: a faint pool of the current lava colour at the bottom
            centre, like the bulb at the base of a lava lamp. A SIBLING of the
            field (not inside it) so the goo filter doesn't threshold it. Colour
-           comes from the same lava-now cycle as the blobs and nav (index.css). -->
+           comes from the same lava-now cycle as the blobs and nav (css/backgrounds.css). -->
       <span class="lava__glow" aria-hidden="true"></span>
     </div>
-    <!-- Canvas backdrops (data-bg="neural" / "network"), drawn by index.js. -->
+    <!-- Canvas backdrops (every data-bg except "lava"), drawn by js/backgrounds/. -->
     <canvas class="neural" aria-hidden="true"></canvas>
 
     <!-- ===========================================================
-         NAV — wide glass pill. Buttons are glass pills; Résumé/Research
-         are dropdowns. Any control with data-section switches the page.
+         NAV — wide glass pill; the links are plain words. Projects and CV
+         open flyout panels. Any control with data-section switches the page.
          =========================================================== -->
     <nav class="nav">
       <a class="nav__logo" href="#" data-section="about">
@@ -400,17 +415,17 @@
         <button class="nav__mobile-item" type="button" data-section="service">Service &amp; Teaching</button>
       </div>
     </nav>
-    <!-- Dims and blurs the page while a nav flyout is open (index.js setDropdown). -->
+    <!-- Dims and blurs the page while a nav flyout is open (js/navigation.js setDropdown). -->
     <div class="nav-curtain" aria-hidden="true"></div>
 
     <!-- tabindex="-1": the skip link can move keyboard focus here. -->
     <main id="main-content" tabindex="-1">
       <!-- ===================== ABOUT ===================== -->
       <!-- .float-tiles: this page's tiles hover and tilt toward the cursor
-           (index.css "FLOATING TILES", index.js initTilt). Add the class to
+           (css/layout.css "FLOATING TILES", js/tilt.js initTilt). Add the class to
            any other section to give its tiles the same behaviour. -->
       <section id="about" class="float-tiles">
-        <!-- Layout: page grid (see "Page layout grid" in index.css). The intro
+        <!-- Layout: page grid (see "Page layout grid" in css/layout.css). The intro
              and the portrait are FREE content (no tile); the rest are tiles. -->
         <div class="free" style="--w:8; --wm:8">
           <h1 class="free__brand">
@@ -486,7 +501,7 @@
           <p>Contribute to the lab's research on trustworthy civic technology.</p>
           <p>Developing dissertation work in human-AI interaction and physiological computing.</p>
           <p>Supported by the McKnight Doctoral, SEC Engineering Deans, and CEHPW Fellowships.</p>
-          <!-- [~ STVM] lab-project bullets pending advisor clearance; see CONTENT-UPDATE-CHECKLIST.md Phase 6 -->
+          <!-- [~ STVM] lab-project bullets pending advisor clearance; see docs/CONTENT-UPDATE-CHECKLIST.md Phase 6 -->
         </div>
         <div class="bubble">
           <h3>Graduate Research Assistant | Human-Technology Interaction Lab, The University of Alabama</h3>
@@ -617,7 +632,7 @@
 
       <!-- ===================== RESEARCH OVERVIEW ===================== -->
       <section id="research">
-        <!-- Scroll story (index.css "RESEARCH OVERVIEW", index.js
+        <!-- Scroll story (css/research-story.css, js/research-story.js
              initResearchStory). .story is tall; .story__stage sticks to the
              viewport while the scroll progress scrubs a paused timeline:
                Human-Centered Computing → Physiological Computing + Human-AI
@@ -664,8 +679,8 @@
            is on hold until Wes clears it with the advisor. -->
       <section id="projects" data-featured="bdrxr">
         <!-- ===== SHOWCASE: BDR-XR =====
-             An Apple-style pinned scroll presentation (index.css "SHOWCASE",
-             index.js initShowcases). .showcase is tall; .showcase__stage
+             An Apple-style pinned scroll presentation (css/showcase.css,
+             js/showcase.js initShowcases). .showcase is tall; .showcase__stage
              sticks to the viewport while the scroll position scrubs every
              element that has timing attributes:
 
@@ -728,7 +743,7 @@
         </div>
 
         <h1 class="page-title">More Projects</h1>
-        <!-- The other projects are NOT repeated here: index.js
+        <!-- The other projects are NOT repeated here: js/projects.js
              (cloneOtherProjects) copies them in from the All Projects page,
              so each project is written once. -->
       </section>
@@ -829,7 +844,7 @@
         </div>
 
         <h1 class="page-title">More Projects</h1>
-        <!-- Other projects are cloned in by index.js (cloneOtherProjects). -->
+        <!-- Other projects are cloned in by js/projects.js (cloneOtherProjects). -->
       </section>
 
       <!-- ===================== ALL PROJECTS =====================
@@ -964,7 +979,7 @@
            (…/releases/latest/download/<asset>), so a new release needs no
            edit here as long as the asset names stay the same.
 
-           index.js (initDownloads) adds the live bits:
+           js/downloads.js (initDownloads) adds the live bits:
              .download-card[data-gh-repo]  -> fetches the latest release tag
                                               into .download-card__version
              .download-card__platform[data-os] -> the visitor's OS gets the
@@ -1005,6 +1020,24 @@
       </section>
     </main>
 
-    <script src="index.js" defer></script>
+    <!-- Scripts. All deferred, so they run in this order after the page is
+         parsed. Each file only defines things; js/main.js (last) starts
+         everything. A backdrop's file must come before backgrounds.js. -->
+    <script src="js/glass.js" defer></script>
+    <script src="js/accessibility.js" defer></script>
+    <script src="js/backgrounds/lava.js" defer></script>
+    <script src="js/backgrounds/neurons.js" defer></script>
+    <script src="js/backgrounds/network.js" defer></script>
+    <script src="js/backgrounds/eeg.js" defer></script>
+    <script src="js/backgrounds/backgrounds.js" defer></script>
+    <script src="js/display-menu.js" defer></script>
+    <script src="js/navigation.js" defer></script>
+    <script src="js/projects.js" defer></script>
+    <script src="js/gallery.js" defer></script>
+    <script src="js/research-story.js" defer></script>
+    <script src="js/showcase.js" defer></script>
+    <script src="js/tilt.js" defer></script>
+    <script src="js/downloads.js" defer></script>
+    <script src="js/main.js" defer></script>
   </body>
 </html>

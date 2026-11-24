@@ -1,0 +1,375 @@
+/* ---------------------------------------------------------
+   PROJECT / ABOUT IMAGES + GALLERY
+   A dock with a thumbnail becomes a row: text | image. The thumbnail and its
+   "View all images" pill are SOLID (no backdrop-filter), so they never nest a
+   backdrop-filter inside the dock's glass.
+   --------------------------------------------------------- */
+.bubble.has-image {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+.bubble__text {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.project-image-container {
+  flex: 0 0 auto;
+  /* ALWAYS a square: width may change per layout (see the <=720px rule),
+     the aspect-ratio keeps the height locked to it. */
+  width: 240px;
+  aspect-ratio: 1 / 1;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+.project-image-container.is-single {
+  cursor: zoom-in;
+}
+.project-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* "View all images" pill, overlaid at the bottom of the thumbnail. */
+.view-images-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 0.7rem;
+  transform: translateX(-50%);
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(15, 16, 26, 0.72);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.view-images-btn:hover {
+  background: rgba(30, 32, 48, 0.92);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 255, 255, 0.14);
+}
+
+/* Stacked variant for narrower tiles: the image becomes a wide banner across
+   the top of the tile with the text underneath. Add .bubble--stack to any
+   .bubble[data-images] that is too narrow for the side-by-side row. */
+.bubble--stack.has-image {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+.bubble--stack .bubble__text { flex: 0 1 auto; }
+.bubble--stack .project-image-container {
+  order: -1;
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+}
+
+@media (max-width: 720px) {
+  .bubble.has-image {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* Stacked layout: still a SQUARE (aspect-ratio above), centered, scaling
+     down with the bubble on narrow screens instead of going letterbox. */
+  .project-image-container {
+    width: min(100%, 300px);
+    margin: 0 auto;
+  }
+}
+
+/* ---- Fullscreen gallery carousel (built on demand in js/gallery.js) ----
+   Styled as site chrome: the control bar and close button are the same glass
+   pills as the nav (they're in the shared surface rule below and glassified
+   by LiquidGlass.apply on Chromium); the image sits in a dock-like rounded
+   frame with the specular rim. The overlay stays a PLAIN dark tint — no
+   backdrop-filter here, or the glass controls would nest their
+   backdrop-filter inside it and lose the url() refraction. */
+.gallery-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 13000; /* above the a11y toggle (12000) so it can't overlap the controls */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 5, 10, 0.88);
+  overflow: hidden; /* far side covers can poke past the viewport edge */
+  overscroll-behavior: contain;
+  animation: galleryFade 0.28s ease;
+}
+@keyframes galleryFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.gallery-modal {
+  position: relative;
+  max-width: min(96vw, 1500px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  animation: galleryPop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes galleryPop {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Cover Flow stage ----
+   A perspective box the width of the modal; every slide is absolutely
+   centred in it and moved into place purely by its data-pos (set by
+   js/gallery.js: 0 = current, ±1…±4 = that many covers to the side, far-* =
+   off-stage). The current cover is flat and full size; side covers slide
+   out, turn toward the centre, shrink and recede. Transitions on transform
+   give the sliding/turning motion when the row moves. */
+.gallery-modal-stage {
+  /* Centre cover: ~1.5x the original 640x480 so images can actually be read.
+     Side offsets grow with it so the fan still shows beside the centre. */
+  --slide-w: min(72vw, 960px);
+  --slide-h: min(66vh, 720px);
+  --slide-h: min(66dvh, 720px);
+  --side-x: clamp(190px, 34vw, 480px);  /* first side cover's offset */
+  --side-step: clamp(44px, 6vw, 80px);  /* each further cover */
+  --side-rot: 58deg;
+  --side-scale: 0.78;
+  position: relative;
+  width: min(96vw, 1500px);
+  height: calc(var(--slide-h) + 56px); /* + room for the reflection */
+  perspective: 1200px;
+  perspective-origin: 50% 42%;
+  /* No overflow clipping here: the entrance flies the centre cover in from
+     the dock thumbnail, outside this box. The overlay clips instead. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+.gallery-modal-slide {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--slide-w);
+  height: var(--slide-h);
+  margin-left: calc(var(--slide-w) / -2);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0a0c14;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+  /* The iTunes-style floor reflection (Chromium + Safari; ignored elsewhere). */
+  -webkit-box-reflect: below 6px linear-gradient(transparent 74%, rgba(255, 255, 255, 0.22));
+}
+/* Specular rim as an overlay (an inset box-shadow on the <img> itself would
+   hide behind the replaced image content). */
+.gallery-modal-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 10px 3px rgba(255, 255, 255, 0.10);
+}
+.gallery-modal-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.gallery-modal-slide.is-current { cursor: default; }
+/* RAM: only the covers in the fan (centre ± 4) get their own compositor
+   layer. The far covers are off to the sides and unloaded (js/gallery.js lazy
+   loads them), so a 12-image gallery no longer holds 12 full-size layers. */
+.gallery-modal-slide:not([data-pos^="far"]) { will-change: transform; }
+
+/* Positions. Right side turns toward the centre (negative rotateY), left
+   side mirrors it. Nearer covers stack above farther ones. */
+.gallery-modal-slide[data-pos="0"] {
+  transform: translateX(0) translateZ(0) rotateY(0) scale(1);
+  z-index: 10;
+  opacity: 1;
+}
+.gallery-modal-slide[data-pos="1"],
+.gallery-modal-slide[data-pos="2"],
+.gallery-modal-slide[data-pos="3"],
+.gallery-modal-slide[data-pos="4"] {
+  transform:
+    translateX(calc(var(--side-x) + var(--n) * var(--side-step)))
+    translateZ(-140px)
+    rotateY(calc(-1 * var(--side-rot)))
+    scale(var(--side-scale));
+}
+.gallery-modal-slide[data-pos="-1"],
+.gallery-modal-slide[data-pos="-2"],
+.gallery-modal-slide[data-pos="-3"],
+.gallery-modal-slide[data-pos="-4"] {
+  transform:
+    translateX(calc(-1 * (var(--side-x) + var(--n) * var(--side-step))))
+    translateZ(-140px)
+    rotateY(var(--side-rot))
+    scale(var(--side-scale));
+}
+.gallery-modal-slide[data-pos="1"],  .gallery-modal-slide[data-pos="-1"] { --n: 0; z-index: 9; opacity: 0.95; }
+.gallery-modal-slide[data-pos="2"],  .gallery-modal-slide[data-pos="-2"] { --n: 1; z-index: 8; opacity: 0.85; }
+.gallery-modal-slide[data-pos="3"],  .gallery-modal-slide[data-pos="-3"] { --n: 2; z-index: 7; opacity: 0.7; }
+.gallery-modal-slide[data-pos="4"],  .gallery-modal-slide[data-pos="-4"] { --n: 3; z-index: 6; opacity: 0.5; }
+/* Entrance from a dock thumbnail (js/gallery.js adds/removes these classes):
+   is-gathering — every side cover sits behind the centre, flat, faded, with
+   no transition, while the centre cover zooms in from the thumbnail;
+   is-fanning — the gather is released and each cover slides out to its
+   place, nearer ones first. The modal's own pop is skipped meanwhile. */
+.gallery-modal.is-zooming { animation: none; }
+.gallery-modal-stage.is-gathering .gallery-modal-slide:not(.is-current) {
+  transform: translateX(0) translateZ(-140px) rotateY(0) scale(var(--side-scale));
+  opacity: 0;
+  transition: none;
+}
+.gallery-modal-stage.is-fanning .gallery-modal-slide:not(.is-current) {
+  transition-duration: 0.6s, 0.45s;
+  transition-delay: calc(var(--n, 4) * 70ms);
+}
+
+/* Exit (quicker): is-closing on the stage fades every cover except the
+   thumbnail's (is-origin), which snaps to the centre and is then flown back
+   to its dock frame by an inline transform. is-closing on the overlay clears
+   the dark tint (background only, so the flying cover stays visible) and
+   fades the controls. */
+.gallery-modal-stage.is-closing .gallery-modal-slide:not(.is-origin) {
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+.gallery-modal-stage.is-closing .gallery-modal-slide.is-origin {
+  transform: translateX(0) translateZ(0) rotateY(0) scale(1);
+  opacity: 1;
+  z-index: 11;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  -webkit-box-reflect: none;
+}
+.gallery-modal-overlay.is-closing {
+  background: rgba(4, 5, 10, 0);
+  transition: background 0.3s ease;
+}
+.gallery-modal-overlay.is-closing .gallery-modal-nav,
+.gallery-modal-overlay.is-closing .gallery-modal-close {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+/* Beyond ±4: parked just past the last visible cover, faded out, so a cover
+   entering the row slides in from the edge instead of popping. */
+.gallery-modal-slide[data-pos="far-right"],
+.gallery-modal-slide[data-pos="far-left"] {
+  --n: 4;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.gallery-modal-slide[data-pos="far-right"] {
+  transform: translateX(calc(var(--side-x) + 4 * var(--side-step))) translateZ(-140px) rotateY(calc(-1 * var(--side-rot))) scale(var(--side-scale));
+}
+.gallery-modal-slide[data-pos="far-left"] {
+  transform: translateX(calc(-1 * (var(--side-x) + 4 * var(--side-step)))) translateZ(-140px) rotateY(var(--side-rot)) scale(var(--side-scale));
+}
+
+/* Control pill: ◀ counter ▶ in one glass pill, sized/padded like the nav. */
+.gallery-modal-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+}
+.gallery-modal-counter {
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-width: 5ch;
+  text-align: center;
+}
+.gallery-modal-btn,
+.gallery-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 999px;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Arrows live INSIDE the glass pill: transparent until hovered, then the
+   same lava glow as the nav buttons. (Outside .nav this is the palette's
+   white fallback — same as the dock link buttons.) */
+.gallery-modal-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 1.05rem;
+  background: transparent;
+}
+.gallery-modal-btn:hover {
+  background: var(--lg-tint-hover);
+  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--lava-now) 60%, transparent);
+}
+/* At either end of the row (no wrap-around) the arrow dims and does nothing. */
+.gallery-modal-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+  box-shadow: none;
+}
+/* Close: round glass button pinned to the overlay's top-right, clear of the
+   image at every size. Its background/frost comes from the shared surface
+   rule below. */
+.gallery-modal-close {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+}
+.gallery-modal-close:hover {
+  background: var(--lg-tint-hover);
+  box-shadow:
+    var(--lg-shadow),
+    0 0 14px 3px color-mix(in srgb, var(--lava-now) 60%, transparent);
+}
+
+@media (max-width: 720px) {
+  .gallery-modal { gap: 0.85rem; }
+  /* Phones: a bigger centre cover, side covers tucked closer, fewer in view. */
+  .gallery-modal-stage {
+    --slide-w: min(86vw, 960px);
+    --slide-h: min(52vh, 720px);
+    --slide-h: min(52dvh, 720px); /* leave room for the control pill + close button */
+    --side-x: 40vw;
+    --side-step: 7vw;
+    --side-rot: 62deg;
+    --side-scale: 0.7;
+    width: calc(100vw - 32px);
+    perspective: 900px;
+  }
+  .gallery-modal-slide { border-radius: 14px; }
+}

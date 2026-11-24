@@ -1,0 +1,128 @@
+/* ---------------------------------------------------------
+   NAV DROPDOWNS (Projects / CV)
+   --------------------------------------------------------- */
+/* Apple-style flyout: instead of a small menu hanging off its button, a wide
+   panel opens under the whole nav bar while the page behind dims and blurs
+   (.nav-curtain). The panel is close to opaque, so the links never have to
+   compete with the lava: a small grey label, then large bold links, lined up
+   under the nav word that opened it (--menu-x, set by js/navigation.js).
+
+   .dropdown is position:static on purpose, so the panel positions against
+   the (fixed) .nav and can span its full width. The panel is NOT glassified
+   by the refraction engine. */
+.dropdown { position: static; display: inline-flex; }
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 1.75rem 2rem 2rem var(--menu-x, 2rem);
+  border-radius: 28px;
+  color: #ffffff;
+  background: rgba(18, 19, 26, 0.94);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.25s;
+}
+.dropdown.is-open .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+/* Small grey heading above the links ("Projects", "CV"). */
+.dropdown-label {
+  margin: 0 0 0.6rem;
+  padding: 0 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+/* A second group inside the same panel gets some air above it. */
+.dropdown-item + .dropdown-label { margin-top: 1.1rem; }
+
+.dropdown-item {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0.28rem 0.8rem;
+  font: inherit;
+  font-size: clamp(1.35rem, 2.1vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-align: left;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  /* Each link drifts in a beat after the panel (staggered below). */
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, color 0.15s ease;
+}
+.dropdown.is-open .dropdown-item {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), color 0.15s ease;
+}
+.dropdown.is-open .dropdown-item:nth-of-type(1) { transition-delay: 0.06s, 0.06s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(2) { transition-delay: 0.10s, 0.10s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(3) { transition-delay: 0.14s, 0.14s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(4) { transition-delay: 0.18s, 0.18s, 0s; }
+.dropdown.is-open .dropdown-item:nth-of-type(n + 5) { transition-delay: 0.22s, 0.22s, 0s; }
+
+/* While the pointer is over the list, the other links step back so the one
+   under the pointer stands out. */
+.dropdown-menu:hover .dropdown-item { color: rgba(255, 255, 255, 0.55); }
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus-visible { color: #ffffff; }
+/* The page you are on: marked with the live lava colour. */
+.dropdown-menu .dropdown-item.is-active {
+  color: color-mix(in srgb, var(--lava-now) 55%, #ffffff);
+}
+
+/* The dimmed, blurred page behind an open flyout. Sits just under the nav;
+   it also catches the click that closes the flyout. */
+.nav-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+.nav-curtain.is-on {
+  opacity: 1;
+  visibility: visible;
+}
+html.a11y .nav-curtain {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: rgba(0, 0, 0, 0.7);
+}
+html.a11y .dropdown-item,
+html.a11y .dropdown-menu:hover .dropdown-item,
+html.a11y .dropdown-menu .dropdown-item.is-active {
+  opacity: 1;
+  transform: none;
+  color: #ffffff;
+}
+/* The nav word whose panel is open stays lit. */
+.dropdown.is-open .dropdown-toggle { color: #ffffff; }

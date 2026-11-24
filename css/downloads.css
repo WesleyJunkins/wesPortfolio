@@ -1,0 +1,107 @@
+/* ---------------------------------------------------------
+   DOWNLOADS — one dock per program, stacked like every other page.
+   Layout of the pieces inside a dock only; the glass surface, spacing and
+   rise-in stagger come from .bubble.
+   --------------------------------------------------------- */
+.download-card__icon {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.7));
+}
+.download-card__icon img,
+.download-card__icon svg {
+  width: 56px;
+  height: 56px;
+  display: block;
+}
+.download-card__version {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.4rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  text-shadow: none;
+}
+.download-card__version:empty { display: none; }
+
+/* "Recommended: …" / "Or download …" lead-ins and the small print. */
+.download-card p.download-card__label {
+  margin: 1.1rem 0 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+.download-card p.download-card__note {
+  margin: 1.1rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
+}
+.download-card code {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+}
+
+/* Install command: a dark, solid strip (no nested backdrop-filter inside the
+   dock's glass) with the Copy pill on the right. Long commands wrap. */
+.download-card__cmd {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.6rem 0.6rem 0.85rem;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+.download-card__cmd pre {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.download-card__cmd pre code {
+  padding: 0;
+  background: none;
+  font-size: 1em;
+}
+.download-card__copy {
+  flex: 0 0 auto;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+}
+
+/* Per-platform pills. The visitor's OS gets .is-current (same glow as the
+   current nav page); anchors need the button's box model. */
+.download-card__platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.bubble .download-card__platform {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.92);
+}
+.bubble .download-card__platform:hover { text-decoration: none; }

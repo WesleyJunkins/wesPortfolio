@@ -1,0 +1,56 @@
+/* ---------------------------------------------------------
+   THE GLASS COMPONENT
+   Driven entirely by custom properties:
+     --w / --h / --r  : geometry (unitless; multiplied to px)
+     --frost          : frosted-fill opacity
+     --saturation     : backdrop saturation
+     --filter         : url(#<instance-id>) for this element's filter
+   --------------------------------------------------------- */
+.glass {
+  position: fixed;          /* default; JS may switch to absolute */
+  z-index: 999;
+
+  width: calc(var(--w, 200) * 1px);
+  height: calc(var(--h, 80) * 1px);
+  border-radius: calc(var(--r, 40) * 1px);
+  overflow: hidden;         /* clip any content to the rounded shape */
+
+  /* inert by default so it never blocks scroll/clicks; JS opts in */
+  pointer-events: none;
+
+  background: hsl(0 0% 100% / var(--frost, 0));
+  backdrop-filter: var(--filter) saturate(var(--saturation, 1));
+  -webkit-backdrop-filter: var(--filter) saturate(var(--saturation, 1));
+
+  box-shadow:
+    0 0 2px 1px rgba(255, 255, 255, 0.55) inset,   /* bright inner rim */
+    0 0 10px 4px rgba(255, 255, 255, 0.25) inset,  /* soft inner glow */
+    0px 4px 16px rgba(17, 17, 26, 0.08),           /* outer depth */
+    0px 8px 24px rgba(17, 17, 26, 0.08),
+    0px 16px 56px rgba(17, 17, 26, 0.08);
+}
+
+/* opt-in interactivity (e.g. a dock with clickable icons) */
+.glass--interactive {
+  pointer-events: auto;
+}
+
+/* per-instance filter host: fills the element so feImage's 100%
+   resolves against a real viewport. Carries only <defs> → paints nothing. */
+.glass__filter {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* optional content slot, layered above the (invisible) filter */
+.glass__content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}

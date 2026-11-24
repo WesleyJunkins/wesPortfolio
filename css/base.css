@@ -1,0 +1,59 @@
+/* =========================================================
+   Liquid Glass — reusable component
+   The .glass class is shape-agnostic. Geometry, frost, saturation
+   and the per-instance filter URL all arrive as CSS custom
+   properties set inline by js/glass.js. Works in Chromium (Brave) —
+   backdrop-filter:url() is unsupported in Safari/Firefox.
+   ========================================================= */
+
+:root {
+  /* ===== Liquid Glass tokens (--lg-*) =====
+     The refraction is built per-element by js/glass.js; these tokens are the
+     tint / specular rim / shadow that read the same on every surface, plus
+     the blur/saturate FALLBACK for Safari/Firefox. */
+  --lg-frost: 0.07;                          /* faint glass tint opacity (was 0.05; a touch more frost) */
+  /* How bright the lava field is behind the glass. 1 = the original full-strength
+     colour; lower = darker, so text in the docks competes with less colour.
+     Compositor-only (opacity), so no GPU cost. */
+  --lava-dim: 0.48;
+  --lg-tint: rgba(255, 255, 255, 0.055);
+  --lg-tint-hover: rgba(255, 255, 255, 0.10);
+  --lg-shadow:
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 10px 4px rgba(255, 255, 255, 0.12),
+    0 4px 16px rgba(10, 12, 40, 0.10),
+    0 8px 24px rgba(10, 12, 40, 0.10),
+    0 16px 56px rgba(10, 12, 40, 0.14),
+    inset 0 4px 16px rgba(255, 255, 255, 0.04),
+    inset 0 8px 24px rgba(255, 255, 255, 0.03);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  scrollbar-width: none; /* Firefox: hide the scrollbar (scrolling still works) */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+/* Chromium / Safari: hide the scrollbar. */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  min-height: 100vh;
+  background: #000;
+  font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* 500 (medium) rather than the 400 default: all body copy reads a touch
+     thicker over the lava. Headings/buttons set their own heavier weights. */
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  overflow-x: hidden;
+}

@@ -1,0 +1,256 @@
+/* ---------------------------------------------------------
+   LAVA BACKDROP
+   An animated gooey "lava-lamp" field on black, fixed behind everything.
+   Blobs drift on pure CSS keyframes; the #lava-goo SVG filter (index.html)
+   melds overlapping blobs into metaballs. Gives the liquid glass crisp,
+   moving colour to refract as content scrolls over it.
+   --------------------------------------------------------- */
+.lava {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  /* Dim the whole field toward the black body behind it (see --lava-dim). */
+  opacity: var(--lava-dim, 1);
+}
+
+/* PERF: the goo lives on this HALF-resolution inner field, upscaled 2x by a
+   compositor transform — the per-frame full-screen blur (the page's dominant
+   GPU cost) does ~4x less work for a visually identical soft field. All blob
+   geometry (sizes + drift reach, both viewport-relative units) is divided by
+   --inv so the scale(2) lands it back at the designed values. overflow:hidden
+   HERE (i.e. before the filter, like the old .lava) keeps the "smush": blobs
+   pushed past the edge are clipped flat first, then the goo softens the cap.
+   NO background here. The goo filter shapes the ALPHA channel, so the
+   container must be transparent — only the blobs carry alpha, letting
+   their blurred edges threshold into metaballs that neck & tear. The
+   black field comes from body { background:#000 } sitting behind this. */
+.lava__field {
+  --inv: 2;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  height: 50%;
+  transform: scale(2);
+  transform-origin: 0 0;
+  overflow: hidden;
+  filter: url(#lava-goo);
+}
+
+/* Registered colour props so the hue INTERPOLATES smoothly. Animating the
+   `background`/gradient shorthand only flips it discretely (the abrupt change);
+   animating typed <color> vars that feed the gradient is continuous. */
+@property --c1 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #18a653;
+}
+@property --c2 {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #065725;
+}
+
+.lava__blob {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  /* --s is a viewport unit (vmin): divide by the field's --inv so the 2x
+     upscale restores the designed size. %-based --x/--y need no correction
+     (they track the field, which the scale maps back onto the viewport). */
+  width: calc(var(--s) / var(--inv, 1));
+  height: calc(var(--s) / var(--inv, 1));
+  border-radius: 50%;
+  /* Colour is driven by lava-color (below) through the typed --c1/--c2 vars,
+     so every blob fades through the same hue together, smoothly. */
+  background: radial-gradient(circle at 35% 30%, var(--c1), var(--c2) 72%);
+  transform: translate(-50%, -50%);
+  /* Two synced animations:
+     - lava-drift : per-blob elliptical circulation (varied --hx sign + phase
+       so they orbit instead of just bobbing up/down), flattening at the
+       top/bottom extremes to smush against the edge like a real lamp blob.
+     - lava-color : identical timing on every blob, so the whole field shares
+       one colour that very slowly drifts through the palette. */
+  animation:
+    lava-drift var(--d, 30s) ease-in-out var(--delay, 0s) infinite,
+    lava-color 240s linear var(--color-delay, 0s) infinite;
+  will-change: transform;
+}
+
+/* Elliptical loop: bottom (squished) -> one side -> top (squished) -> other
+   side, then back. --up/--down = vertical reach (push past the viewport so
+   overflow clips a flat cap against the edge); --hx = horizontal bulge whose
+   SIGN sets the spin direction; scale() flattens the blob at the caps. */
+@keyframes lava-drift {
+  /* vh/vw reaches are divided by --inv (1 outside a scaled field) so the
+     half-resolution field's 2x upscale restores the designed travel. */
+  0%,
+  100% {
+    transform: translate(-50%, calc(-50% + var(--down, 32vh) / var(--inv, 1)))
+      scale(1.28, 0.66);
+  }
+  25% {
+    transform: translate(calc(-50% + var(--hx, 8vw) / var(--inv, 1)), -50%)
+      scale(1);
+  }
+  50% {
+    transform: translate(-50%, calc(-50% + var(--up, -32vh) / var(--inv, 1)))
+      scale(1.28, 0.66);
+  }
+  75% {
+    transform: translate(calc(-50% - var(--hx, 8vw) / var(--inv, 1)), -50%)
+      scale(1);
+  }
+}
+
+/* Shared by every blob with NO per-blob delay, so the field is one colour at
+   any instant. linear timing + 240s = a continuous, very slow drift (no
+   resting on a colour, no abrupt change).
+
+   PALETTE: tuned for --lava-dim: 0.48. The field is shown at about half
+   strength over black, so these source colours are deliberately bright and
+   saturated: what reaches the screen is a deep jewel tone, not the vivid hex
+   written here. Each stop was solved so that AFTER dimming it lands at the
+   same perceived lightness (OKLCH L 0.38 for --c1, 0.25 for --c2) with close
+   to the most colour that brightness allows, so no hue looks darker or
+   greyer than its neighbours.
+   ORDER: out and back (emerald → blues → violets → ember, then home by a
+   slightly different route) instead of once round the colour wheel. Dark
+   yellow and olive are the muddy part of the wheel at this brightness, and
+   neighbouring stops are close in hue so the blend between them stays clean.
+   If --lava-dim changes much, the palette should be re-solved for it.
+   lava-now (below) repeats the --c1 column and must be kept in step. */
+@keyframes lava-color {
+  0%,
+  100% { /* emerald */
+    --c1: #18a653;
+    --c2: #065725;
+  }
+  10% { /* azure */
+    --c1: #1797cc;
+    --c2: #064e6d;
+  }
+  20% { /* blue */
+    --c1: #4a85f7;
+    --c2: #083ca7;
+  }
+  30% { /* violet */
+    --c1: #a75ef7;
+    --c2: #5c2096;
+  }
+  40% { /* magenta */
+    --c1: #e041b0;
+    --c2: #820861;
+  }
+  50% { /* ember */
+    --c1: #eb5212;
+    --c2: #802405;
+  }
+  60% { /* rose */
+    --c1: #f23877;
+    --c2: #8b0839;
+  }
+  70% { /* purple */
+    --c1: #c151e2;
+    --c2: #6d1684;
+  }
+  80% { /* indigo */
+    --c1: #6c7cf7;
+    --c2: #2f32a7;
+  }
+  90% { /* teal */
+    --c1: #18a097;
+    --c2: #06534d;
+  }
+}
+
+/* ---------------------------------------------------------
+   CANVAS BACKDROPS — the alternatives to the lava, chosen from the display
+   menu. html[data-bg] names the current backdrop; anything other than
+   "lava" (or no attribute) is drawn on the one .neural canvas by a renderer
+   in js/backgrounds/, in the nav glow's live colour. The lava blobs are
+   hidden while one is showing; the soft glow along the bottom stays.
+   These rules cover every canvas backdrop, so adding one needs no CSS.
+   --------------------------------------------------------- */
+.neural {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: none;
+}
+html[data-bg]:not([data-bg="lava"]) .neural { display: block; }
+/* visibility, NOT display:none. display:none cancels the blobs' colour
+   animation, and showing them again restarts it from the beginning, while
+   the nav and the bottom glow carry on from where they were: the lava then
+   comes back a different colour from the glow and the nav highlights.
+   Hidden this way the blobs keep time (and cost nothing to paint). */
+html[data-bg]:not([data-bg="lava"]) .lava__field { visibility: hidden; }
+html[data-bg]:not([data-bg="lava"]) .lava__glow { --glow: 0.55; }
+html.a11y .neural { display: none !important; }
+
+/* ---- Live glow colour: --lava-now tracks the CURRENT lava colour (same 240s
+   cycle as lava-color, no delay → in sync). Animated on .nav ONLY (a tiny
+   subtree) and inherited down to the nav buttons / dropdown items. DO NOT
+   animate an inherited custom property on <html>/<body>: it invalidates style
+   for the WHOLE DOM every frame, which tanked perf and ballooned RAM. Everything
+   outside .nav (dock link buttons, download pills, gallery controls, the
+   accessibility orb) inherits the static initial value below: plain WHITE, so
+   those glows read as neutral instead of a stale pink. ---- */
+@property --lava-now {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ffffff;
+}
+@keyframes lava-now {
+  0%,
+  100% { --lava-now: #18a653; }
+  10% { --lava-now: #1797cc; }
+  20% { --lava-now: #4a85f7; }
+  30% { --lava-now: #a75ef7; }
+  40% { --lava-now: #e041b0; }
+  50% { --lava-now: #eb5212; }
+  60% { --lava-now: #f23877; }
+  70% { --lava-now: #c151e2; }
+  80% { --lava-now: #6c7cf7; }
+  90% { --lava-now: #18a097; }
+}
+
+/* ---- Lamp glow: a faint, wide pool of the current lava colour along the
+   bottom-centre edge, like the bulb at the base of a lava lamp. A sibling of
+   .lava__field (so the goo filter can't threshold it) and inside .lava, so
+   --lava-dim dims it with the rest of the field and a11y mode hides it too.
+   Animates lava-now on ITSELF: a leaf element with no descendants, so the
+   per-frame style invalidation the note above warns about stays contained
+   (same --color-delay seed, so it is always the blobs' current hue).
+   Tune: width/height for the spread, --glow for the strength. ---- */
+.lava__glow {
+  --glow: 0.85;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 110vw;
+  height: 52vh;
+  /* Centre the ellipse on the bottom edge so only its top half shows. */
+  transform: translate(-50%, 50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--lava-now) 0%,
+    color-mix(in srgb, var(--lava-now) 55%, transparent) 45%,
+    transparent 100%
+  );
+  opacity: var(--glow);
+  animation: lava-now 240s linear var(--color-delay, 0s) infinite;
+  pointer-events: none;
+  will-change: transform; /* own layer: the colour repaint stays on this element */
+}
+
+/* The ambient lava + nav glow are intentionally kept animating on ALL devices
+   (including mobile and prefers-reduced-motion) — the moving, colour-cycling
+   backdrop is core to the design. Re-add a prefers-reduced-motion guard here if
+   accessibility compliance is needed. */

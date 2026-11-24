@@ -1,0 +1,301 @@
+/* ---------------------------------------------------------
+   CONTENT — one section ("page") visible at a time
+   --------------------------------------------------------- */
+main {
+  /* Exposed so a full-bleed page (the Research story) can cancel them. */
+  --main-top: 104px;
+  --main-bottom: 56px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--main-top) 1rem var(--main-bottom); /* clear the fixed nav at the top */
+}
+
+section { display: none; }
+
+/* ---- Page layout grid ---------------------------------------------------
+   Every page (section) is a 12-column grid. Each direct child is placed by
+   custom properties set inline on the element:
+
+     --w   columns to span (1-12). Default 12 = full width.
+     --h   rows to span. Default 1. A tall tile beside two short ones is
+           --h:2 on the tall one.
+     --col column to start at (1-12). Default auto = next free slot.
+     --wm / --hm   the same spans for the mid breakpoint (721-1000px).
+           Default there is full width, so only set --wm to keep a tile
+           side-by-side on tablets.
+
+   e.g. <div class="bubble" style="--w:8; --h:2">   wide, two rows tall
+        <div class="bubble" style="--w:4">          sits to its right
+        <div class="free"   style="--w:6; --col:4"> un-tiled, centred
+
+   Children fill the grid in source order (no dense packing), so the visual
+   order always matches the reading / tab order. Tiles in a row stretch to
+   the same height. At <=720px everything is one column.
+
+   Two kinds of child:
+     .bubble  a glass content tile
+     .free    content with NO tile, sitting straight on the backdrop
+              (see "FREE CONTENT" below). .page-title is also un-tiled.
+   ------------------------------------------------------------------------ */
+section.is-active {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--page-gap, 1.25rem);
+}
+section > * {
+  grid-column: var(--col, auto) / span var(--w, 12);
+  grid-row: span var(--h, 1);
+  min-width: 0;
+}
+/* The Research page is a full-bleed scroll story, not a grid. */
+#research.is-active { display: block; }
+
+@media (max-width: 1000px) {
+  section > * {
+    grid-column: auto / span var(--wm, 12);
+    grid-row: span var(--hm, 1);
+  }
+}
+@media (max-width: 720px) {
+  section > * {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+.page-title {
+  text-align: center;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 0.25rem; /* the grid gap supplies the rest */
+  color: rgba(255, 255, 255, 0.42);
+}
+
+/* ---- Content docks (bubbles). Glass tint/shadow comes from the shared
+   surface rule; this is layout + typography only. ---- */
+.bubble {
+  width: 100%;
+  margin: 0;                 /* spacing comes from the page grid's gap */
+  padding: 1.75rem 2rem;
+  border-radius: 28px;       /* dock corner; the engine reads this for the map */
+  text-align: left;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bubble h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+.bubble h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 650; /* variable fonts (SF Pro) render this; others round to 700 */
+  color: rgba(255, 255, 255, 0.6);
+}
+.bubble p {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.84);
+}
+.bubble p:last-child { margin-bottom: 0; }
+.bubble a { color: #79c0ff; text-decoration: none; font-weight: 600; }
+.bubble a:hover { text-decoration: underline; }
+/* Divider between entries grouped inside one dock (e.g. "Earlier Honors"). */
+.bubble hr {
+  border: none;
+  height: 1px;
+  margin: 0.9rem 0 1rem;
+  background: rgba(255, 255, 255, 0.16);
+}
+html.a11y .bubble hr { background: rgba(255, 255, 255, 0.45); }
+
+/* Readability: a soft, blurred dark halo directly behind each line of text so
+   it stays legible over the busy lava. Done as a text-shadow blur (it hugs each
+   line) rather than a child backdrop-filter, which would nest inside the dock's
+   glass and reintroduce the refraction artifacts we fought earlier. Links inside
+   paragraphs inherit it. */
+.bubble h3,
+.bubble h4,
+.bubble p {
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 9px rgba(0, 0, 0, 0.75),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Staggered rise-in when a section is shown. NO `filter` here — a filter on a
+   glass surface disables its url() backdrop refraction in Chromium. Delay is
+   set per-bubble from JS. */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+section.is-active .bubble,
+section.is-active .free {
+  animation: riseIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ---------------------------------------------------------
+   FLOATING TILES — opt-in per page with class="float-tiles" on the section.
+   Tiles look lifted off the page (deeper shadow) and, under a mouse, turn
+   slightly to face the cursor with a soft highlight following it.
+
+   The tilt uses the INDIVIDUAL `rotate` property, never `transform`: the
+   rise-in animation holds `transform` with fill-mode both, which would
+   override it, and `rotate` composes on top instead. The tilt (rotate) and
+   highlight position (--mx / --my) are set by initTilt().
+   Angles stay small because the glass refraction is sized from the tile's
+   flat box. Off in accessibility mode and on touch screens (no cursor).
+   --------------------------------------------------------- */
+.float-tiles { perspective: 1400px; }
+.float-tiles > .bubble {
+  position: relative; /* anchors the ::after highlight */
+  box-shadow:
+    var(--lg-shadow),
+    0 38px 70px -22px rgba(0, 0, 0, 0.7),
+    0 14px 28px -14px rgba(0, 0, 0, 0.5);
+  /* Slow settle when the cursor leaves; initTilt shortens it while tracking. */
+  transition: rotate 0.7s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  will-change: rotate;
+}
+.float-tiles > .bubble.is-tilting { transition-duration: 0.12s, 0.3s; }
+/* Highlight that follows the cursor across the tile. */
+.float-tiles > .bubble::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.13),
+    rgba(255, 255, 255, 0) 60%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.float-tiles > .bubble.is-tilting::after { opacity: 1; }
+html.a11y .float-tiles > .bubble { rotate: none !important; }
+html.a11y .float-tiles > .bubble::after { display: none; }
+
+/* ---------------------------------------------------------
+   FREE CONTENT — page content that is NOT in a tile
+   A .free block is a grid child like a tile (--w / --h / --col) but has no
+   glass, no background and no padding: its text sits straight on the
+   backdrop, kept legible by the same dark halo the tiles use. Building
+   blocks (all optional, mix freely inside one .free):
+
+     h1 / h2          big display heading
+     .free__kicker    small uppercase line (above or below a heading)
+     .free__lede      large intro paragraph
+     p                normal paragraph
+     .free--label     a slim section divider: text + a hairline rule
+     .free--center    centre the text
+     .free-media      a free image: add data-images='[...]' and js/projects.js
+                      builds the thumbnail (click = gallery), no tile
+   --------------------------------------------------------- */
+.free {
+  align-self: center;
+  color: rgba(255, 255, 255, 0.92);
+  overflow-wrap: break-word;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(0, 0, 0, 0.8),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.free--center { text-align: center; }
+.free > :first-child { margin-top: 0; }
+.free > :last-child { margin-bottom: 0; }
+.free h1,
+.free h2 {
+  margin: 0 0 0.6rem;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+.free h1 { font-size: clamp(2.6rem, 6.4vw, 4.75rem); }
+/* A heading with the logo beside it (About page). The logo is sized in em,
+   so it always matches the height of the name. */
+.free h1.free__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+}
+.free__brand-logo {
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+.free h2 { font-size: clamp(1.8rem, 4vw, 2.75rem); }
+.free p {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.86);
+}
+.free p.free__kicker {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.66);
+}
+.free p.free__lede {
+  font-size: clamp(1.1rem, 1.9vw, 1.4rem);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+}
+.free a { color: #79c0ff; text-decoration: none; font-weight: 600; }
+.free a:hover { text-decoration: underline; }
+
+/* Slim divider between groups of tiles: LABEL ———————— */
+.free--label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+.free--label::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
+}
+
+/* Free image: the thumbnail frame on its own, no tile around it. */
+.free-media {
+  display: flex;
+  justify-content: center;
+}
+.free-media .project-image-container {
+  width: min(100%, var(--media-size, 300px));
+  border-radius: 28px;
+}
+
+html.a11y .free { text-shadow: none; }
+html.a11y .free p { color: #eef1f7; }
+html.a11y .free p.free__kicker,
+html.a11y .free--label { color: rgba(255, 255, 255, 0.78); }
+html.a11y .free--label::after { background: rgba(255, 255, 255, 0.45); }
+html.a11y .free a { color: #a7cbff; text-decoration: underline; }
+
+/* Row of pill buttons inside a tile (the Contact tile's links). */
+.link-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

@@ -1,0 +1,173 @@
+/* =========================================================
+   CHROME — nav pill, nav links, pill buttons
+   Layout only here. The refraction is attached by js/glass.js
+   (LiquidGlass.apply) which sets backdrop-filter:url() inline; the
+   blur/saturate below is the Safari/Firefox fallback. NEVER add a CSS
+   `filter` to these surfaces — it disables the url() refraction in Chromium.
+   ========================================================= */
+
+/* Shared glass surface — tint + specular rim + fallback frost. border:none
+   keeps the border box == padding box so the measured map stays aligned. */
+.nav,
+.btn,
+.bubble,
+.orb,
+.gallery-modal-nav,
+.gallery-modal-close {
+  color: rgba(255, 255, 255, 0.92);
+  border: none;
+  background: hsl(0 0% 100% / var(--lg-frost, 0.05));
+  -webkit-backdrop-filter: blur(2px) saturate(1.3);
+  backdrop-filter: blur(2px) saturate(1.3);
+  box-shadow: var(--lg-shadow);
+}
+
+/* No url() refraction engine (Safari / Firefox — js/glass.js only adds
+   .lg-refract on <html> in Chromium): the faint 2px frost above is only meant
+   as Chromium's pre-engine/off-screen filler, so give these browsers the same
+   proper frosted glass the touch devices use, on every surface. On Chromium
+   the inline url() refraction still overrides this per element. */
+html:not(.lg-refract) .nav,
+html:not(.lg-refract) .btn,
+html:not(.lg-refract) .bubble,
+html:not(.lg-refract) .orb,
+html:not(.lg-refract) .gallery-modal-nav,
+html:not(.lg-refract) .gallery-modal-close,
+html:not(.lg-refract) .a11y-toggle {
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+/* Content docks: displacement refraction (set inline by js/glass.js). The blur below
+   is the Safari / off-screen fallback; tint + bloom (--lg-shadow) come from the
+   shared rule above. */
+.bubble {
+  /* 2.5px → 4px: a touch more frost on the fallback, matching the slightly
+     higher outputBlur in js/glass.js TUNING for the Chromium refraction. */
+  -webkit-backdrop-filter: blur(4px) saturate(1.7);
+  backdrop-filter: blur(4px) saturate(1.7);
+  /* Bloom (--lg-shadow) is inherited from the shared rule above — restored. */
+}
+
+/* ---- Nav: wide pill across the top ---- */
+.nav {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  /* Desktop: logo + links sit together in the middle of the bar. The compact
+     (hamburger) view switches back to space-between: logo left, menu right. */
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0.5rem 0.60rem 0.5rem 0.60rem;
+  border-radius: 999px; /* fallback; JS sets exact height/2 */
+  /* Drives --lava-now (inherited by the nav's buttons) for their live glow.
+     Scoped here so we don't invalidate the whole DOM every frame.
+     --color-delay (set once at load by randomizeLava) seeks both this and the
+     blobs' lava-color to the SAME random start hue, keeping glow + lava synced. */
+  animation: lava-now 240s linear var(--color-delay, 0s) infinite;
+}
+
+.nav__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nav__logo-img {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  transition: transform 0.25s ease;
+}
+.nav__logo:hover .nav__logo-img {
+  transform: scale(1.06);
+}
+
+.nav__buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ---- Nav links: plain words, no pill and no glass. Hover and the selected
+   page are shown with the text itself: brighter, plus a soft glow / short
+   underline in the live lava colour (--lava-now, animated on .nav). ---- */
+.nav__link {
+  position: relative;
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+.nav__link::after {
+  content: "";
+  position: absolute;
+  left: 0.8rem;
+  right: 0.8rem;
+  bottom: 0.2rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--lava-now);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.nav__link:hover {
+  color: #ffffff;
+  text-shadow: 0 0 14px var(--lava-now);
+}
+.nav__link.is-current { color: #ffffff; }
+.nav__link.is-current::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Buttons: pills sized to their text. Hover and selection are box-shadow
+   GLOWS (no transform/size change), so the button stays in place and the
+   measured displacement map never goes stale. The glow colour is --lava-now,
+   which tracks the live lava colour. ---- */
+.btn {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 999px; /* fallback; JS sets height/2 */
+  transition: box-shadow 0.25s ease, background 0.25s ease;
+}
+
+/* A pill marked as the current choice: a FAINT glow. Used by the Downloads
+   page to mark the visitor's own platform (js/downloads.js). The nav's own
+   current-page marker is .nav__link.is-current, above. */
+.btn.is-current {
+  box-shadow:
+    var(--lg-shadow),
+    0 0 16px 4px color-mix(in srgb, var(--lava-now) 76%, transparent);
+}
+
+/* Hover: stay in place, glow brighter in the current lava colour. After
+   .is-current in source order, so a hovered current button shows this stronger
+   glow. */
+.btn:hover {
+  background: var(--lg-tint-hover);
+  box-shadow:
+    var(--lg-shadow),
+    0 0 26px 8px var(--lava-now),
+    0 0 12px 3px var(--lava-now);
+}

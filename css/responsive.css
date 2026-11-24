@@ -1,0 +1,135 @@
+/* =========================================================
+   RESPONSIVE — tablet & mobile
+   The desktop nav (logo + button row) holds down to 720px, so portrait tablets
+   (768px) keep it. At <=720px the button row swaps for a hamburger menu and the
+   content spacing / image layout tighten; <=480px tightens further.
+   ========================================================= */
+
+/* Long titles / URLs must wrap instead of forcing horizontal scroll. */
+.bubble,
+.bubble__text {
+  overflow-wrap: break-word;
+}
+
+/* Hamburger toggle — hidden on desktop, revealed <=720px. */
+.nav__burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.nav__burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.nav.is-open .nav__burger span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav.is-open .nav__burger span:nth-child(2) {
+  opacity: 0;
+}
+.nav.is-open .nav__burger span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Mobile menu panel. SOLID (no backdrop-filter) so it doesn't nest a
+   backdrop-filter inside the nav's glass. Hidden until .nav.is-open, and only
+   opted in at <=720px (rule below). */
+.nav__mobile {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(260px, calc(100vw - 24px));
+  /* dvh where supported: iOS Safari's 100vh includes the retracted toolbar,
+     which let the panel's bottom hide behind it. vh line stays as fallback. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
+  overflow-y: auto;
+  overscroll-behavior: contain; /* scrolling the menu never scrolls the page */
+  display: none;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem;
+  border-radius: 18px;
+  background: rgba(16, 18, 28, 0.96);
+  box-shadow: var(--lg-shadow);
+}
+.nav__mobile-label {
+  padding: 0.55rem 0.85rem 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: rgba(255, 255, 255, 0.45);
+}
+.nav__mobile-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: left;
+  padding: 0.75rem 0.85rem; /* ~44px row = comfortable touch target */
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav__mobile-item:hover,
+.nav__mobile-item:active { /* :active = touch feedback (no hover on phones) */
+  background: rgba(255, 255, 255, 0.08);
+}
+.nav__mobile-item.is-active {
+  background: color-mix(in srgb, var(--lava-now) 18%, transparent);
+}
+
+/* ---- <=720px: hamburger nav + tighter content ---- */
+/* ---- <=860px: hamburger. (Was 720px; the flat seven-item nav needs the
+   room.) ---- */
+@media (max-width: 860px) {
+  .nav { justify-content: space-between; gap: 1rem; }
+  .nav__buttons { display: none; }
+  .nav__burger { display: flex; }
+  /* Same entrance as the desktop dropdown (fade + 6px drop). display toggles
+     can't transition, so it's a keyframe run each time the panel opens. */
+  .nav.is-open .nav__mobile {
+    display: flex;
+    animation: menuIn 0.2s ease;
+  }
+  /* Mobile brand: just the (bigger) circular logo. 40px balances the 42px
+     hamburger and fills the pill with a little breathing room. */
+  .nav__logo-img { height: 40px; }
+}
+
+@media (max-width: 720px) {
+  main { --main-top: 88px; --main-bottom: 48px; padding: var(--main-top) 0.85rem var(--main-bottom); }
+  .bubble { padding: 1.35rem 1.25rem; border-radius: 22px; }
+  .bubble h3 { font-size: 1.2rem; }
+  .bubble.has-image { gap: 1.1rem; }
+}
+
+/* ---- <=480px: phones ---- */
+@media (max-width: 480px) {
+  main { --main-top: 82px; --main-bottom: 40px; padding: var(--main-top) 0.65rem var(--main-bottom); }
+  .bubble { padding: 1.1rem 1rem; }
+  .nav__mobile { width: calc(100vw - 24px); }
+}

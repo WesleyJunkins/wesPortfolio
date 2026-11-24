@@ -1,0 +1,156 @@
+/* ---------------------------------------------------------
+   RESEARCH OVERVIEW — scroll story (markup in #research; js/research-story.js
+   initResearchStory). .story is a tall scroller; .story__stage sticks to the
+   viewport for its whole height, and the scroll progress through .story
+   (0 → 1) scrubs a paused Web Animations timeline that js/research-story.js builds from
+   the stage's size: orbs emerge from behind their parents, lines draw with a
+   dash-offset sweep, cards rise in and out. CSS here is layout + looks only;
+   every position and timing lives in js/research-story.js (slots P + timeline T).
+   Orbs are glass surfaces (shared surface rule + LiquidGlass.apply). Motion
+   is translate + opacity ONLY: the engine sizes each refraction map from
+   getBoundingClientRect, so a scale transform would bake a wrong-sized map.
+   --------------------------------------------------------- */
+.story {
+  --beats: 7;               /* ~90vh of scrolling per beat */
+  --o-root: 150px;
+  --o-child: 130px;
+  --o-leaf: 118px;
+  position: relative;
+  height: calc(var(--beats) * 90vh);
+  /* Full-bleed vertically: cancel main's nav clearance and bottom padding so
+     the stage fills the viewport from the first pixel (the "Scroll" cue is in
+     view on arrival) and the story ends exactly at the bottom of the page. */
+  margin-top: calc(-1 * var(--main-top, 104px));
+  margin-bottom: calc(-1 * var(--main-bottom, 56px));
+}
+.story__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+/* Float-in on each visit (js/research-story.js restarts it). */
+@keyframes storyIn {
+  from { opacity: 0; transform: translateY(36px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.orb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: #ffffff;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 9px rgba(0, 0, 0, 0.75),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+  -webkit-user-select: none;
+  user-select: none;
+}
+.story__orb {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%); /* the script composes its offsets after this */
+}
+.orb--root  { width: var(--o-root);  height: var(--o-root);  z-index: 6; font-size: 1.04rem; }
+.orb--child { width: var(--o-child); height: var(--o-child); z-index: 5; }
+.orb--leaf  { width: var(--o-leaf);  height: var(--o-leaf);  z-index: 4; }
+
+.story__card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: 3;
+  width: min(720px, 92vw);
+  margin: 0;
+  transform: translate(-50%, 0);
+}
+.story__lines {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.story__lines path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.62);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+}
+.story__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 5vh;
+  z-index: 2;
+  transform: translateX(-50%);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.story__hint::after {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 0.55rem auto 0;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  animation: hintBob 1.6s ease-in-out infinite;
+}
+@keyframes hintBob {
+  0%, 100% { transform: translateY(0) rotate(45deg); }
+  50%      { transform: translateY(6px) rotate(45deg); }
+}
+@media (max-height: 760px) {
+  .story { --o-root: 128px; --o-child: 112px; --o-leaf: 102px; }
+  .story__card p { font-size: 0.94rem; }
+  .orb { font-size: 0.9rem; }
+  .orb--root { font-size: 0.96rem; }
+}
+@media (max-width: 720px) {
+  .story { --o-root: 124px; --o-child: 106px; --o-leaf: 96px; }
+  .orb { font-size: 0.84rem; padding: 0 0.7rem; }
+  .orb--root { font-size: 0.9rem; }
+  .story__card { width: calc(100vw - 32px); }
+}
+/* Accessibility mode: no scrubbing — the same content as a plain column.
+   !important beats the (cancelled anyway) inline animations. */
+html.a11y .story { height: auto; }
+html.a11y .story__stage {
+  position: static;
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+html.a11y .story__orb,
+html.a11y .story__card {
+  position: static;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html.a11y .story__card { width: 100%; }
+html.a11y .story__lines,
+html.a11y .story__hint { display: none; }

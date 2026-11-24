@@ -1,3 +1,5 @@
+> Note (2026-11-23): this log predates the reorganisation of the site's files. Where it says `index.css` or `index.js`, the code now lives in `css/` and `js/` (see the README).
+
 # Content Update Checklist — wesleyjunkins.com
 
 Source brief: [wesleyjunkins-content-update.md](wesleyjunkins-content-update.md) (§ numbers below refer to it).
